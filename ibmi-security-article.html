@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBM i Security in the API Era</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --ibm-blue: #0f62fe; --ibm-blue-dark: #0043ce;
+    --ibm-cool-gray-10: #f2f4f8; --ibm-cool-gray-20: #dde1e6;
+    --ibm-cool-gray-60: #697077; --ibm-cool-gray-90: #21272a;
+    --ibm-cool-gray-100: #121619; --ibm-red: #da1e28;
+    --ibm-green: #24a148; --ibm-teal: #009d9a;
+    --text-primary: #161616; --text-secondary: #525252;
+    --bg: #ffffff; --bg-subtle: #f4f4f4;
+    --border: #e0e0e0; --accent-bar: 4px solid var(--ibm-blue);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; font-size: 17px; line-height: 1.75; color: var(--text-primary); background: var(--bg); max-width: 820px; margin: 0 auto; padding: 60px 40px 100px; }
+  .article-header { border-left: var(--accent-bar); padding-left: 24px; margin-bottom: 56px; }
+  .article-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ibm-blue); margin-bottom: 12px; }
+  h1 { font-family: 'IBM Plex Serif', serif; font-size: 2.4rem; font-weight: 600; line-height: 1.2; color: var(--ibm-cool-gray-100); margin-bottom: 20px; }
+  .article-meta { font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; gap: 20px; flex-wrap: wrap; }
+  .article-meta span::before { content: '· '; } .article-meta span:first-child::before { content: ''; }
+  .lead { font-size: 1.15rem; line-height: 1.8; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 48px; }
+  .section { margin-bottom: 52px; }
+  h2 { font-size: 1.35rem; font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  h2 .emoji { font-size: 1.2rem; flex-shrink: 0; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--ibm-cool-gray-90); margin: 28px 0 10px; }
+  p { margin-bottom: 16px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+  .callout { background: var(--ibm-cool-gray-10); border-left: 4px solid var(--ibm-blue); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .callout strong { color: var(--ibm-blue-dark); }
+  .outcome { background: #defbe6; border-left: 4px solid var(--ibm-green); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .outcome strong { color: #044317; }
+  .warning { background: #fff1f1; border-left: 4px solid var(--ibm-red); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .warning strong { color: #750e13; }
+  .arrow-list { list-style: none; margin: 12px 0 20px; padding: 0; }
+  .arrow-list li { padding: 5px 0 5px 22px; position: relative; }
+  .arrow-list li::before { content: '→'; position: absolute; left: 0; color: var(--ibm-blue); font-weight: 600; }
+  .numbered-list { list-style: none; margin: 12px 0 20px; padding: 0; counter-reset: item; }
+  .numbered-list li { padding: 8px 0 8px 36px; position: relative; counter-increment: item; border-bottom: 1px solid var(--ibm-cool-gray-20); }
+  .numbered-list li:last-child { border-bottom: none; }
+  .numbered-list li::before { content: counter(item); position: absolute; left: 0; top: 8px; background: var(--ibm-blue); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .code-block { margin: 24px 0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+  .code-label { background: #1a1d23; color: #6b7280; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; padding: 8px 16px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2d3139; }
+  .code-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; } .dot-yellow { background: #ffbd2e; } .dot-green { background: #28c840; }
+  .code-block pre { margin: 0 !important; border-radius: 0 !important; }
+  .code-block pre code { font-family: 'IBM Plex Mono', monospace !important; font-size: 13.5px !important; line-height: 1.65 !important; padding: 20px !important; }
+  .code-label.bad { background: #2a1215; } .code-label.bad .label-text { color: #ff8080; }
+  .code-label.good { background: #0d2117; } .code-label.good .label-text { color: #6ee7a0; }
+  .metrics { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.92rem; }
+  .metrics th { background: var(--ibm-cool-gray-90); color: white; padding: 10px 16px; text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .metrics td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  .metrics tr:nth-child(even) td { background: var(--bg-subtle); }
+  .arch-diagram { background: var(--ibm-cool-gray-10); border: 1px solid var(--border); border-radius: 6px; padding: 28px; margin: 20px 0; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+  .arch-box { display: inline-block; background: white; border: 2px solid var(--ibm-blue); border-radius: 4px; padding: 8px 24px; font-weight: 500; color: var(--ibm-cool-gray-100); margin: 4px 0; }
+  .arch-arrow { display: block; color: var(--ibm-blue); font-size: 20px; line-height: 1.4; }
+  .layers { display: grid; gap: 0; margin: 20px 0; }
+  .layer { padding: 14px 20px; border-left: 4px solid var(--ibm-blue); border-bottom: 1px solid var(--border); background: white; font-size: 0.95rem; }
+  .layer:nth-child(even) { background: var(--ibm-cool-gray-10); }
+  .layer-num { font-weight: 600; color: var(--ibm-blue); margin-right: 8px; }
+  .checklist { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 6px; }
+  .checklist li { padding: 8px 12px 8px 36px; background: var(--bg-subtle); border-radius: 4px; position: relative; font-size: 0.92rem; }
+  .checklist li::before { content: '☐'; position: absolute; left: 12px; color: var(--ibm-blue); font-size: 1rem; }
+  .conclusion-box { background: var(--ibm-cool-gray-100); color: white; border-radius: 8px; padding: 36px 40px; margin-top: 48px; }
+  .conclusion-box h2 { color: white; margin-bottom: 16px; }
+  .conclusion-box p { color: #c6c6c6; }
+  .conclusion-box .arrow-list li { color: #e0e0e0; }
+  .conclusion-box .arrow-list li::before { color: #78a9ff; }
+  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header class="article-header">
+  <div class="article-label">IBM i Architecture · Security</div>
+  <h1>IBM i Security in the API Era: Protecting Your Systems in a Connected World</h1>
+  <div class="article-meta">
+    <span>Last Updated: March 2026</span>
+    <span>Version 2.0</span>
+    <span>IBM i Reference Pages Blog</span>
+  </div>
+</header>
+
+<p class="lead">
+  You have exposed your IBM i programs as REST APIs. Your mobile app is working. Your cloud integrations are live. Then someone asks: <em>"How secure is this?"</em><br><br>
+  Opening your IBM i to the modern world also opens it to modern threats. This article explores practical, layered security strategies for IBM i in a connected world — extending the platform's already strong foundation to cover the API era.
+</p>
+
+<div class="section">
+  <h2><span class="emoji">🔒</span> IBM i Security: Already Strong by Design</h2>
+  <p>Before addressing modern threats, it is important to recognize what IBM i already provides. It is one of the most secure enterprise platforms available.</p>
+  <ul class="arrow-list">
+    <li><strong>Object-level security</strong> — No direct file access without explicit authority</li>
+    <li><strong>Integrated authentication</strong> — User profiles control everything</li>
+    <li><strong>Single-level storage</strong> — Memory protection built into the OS</li>
+    <li><strong>Built-in auditing (QAUDJRN)</strong> — Comprehensive logging of security events</li>
+    <li><strong>Exit points</strong> — Intercept and validate operations at the system level</li>
+  </ul>
+  <div class="callout"><strong>📌 Key principle:</strong> The challenge is not replacing IBM i security — it is extending it to cover modern API-driven access patterns. This is about evolution, not revolution.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">⚡</span> How the Threat Landscape Has Changed</h2>
+  <p>Traditional IBM i security was designed for an era of 5250 terminals, on-premise applications, and a clearly defined network perimeter. Today's reality is fundamentally different.</p>
+  <p>APIs are accessible from anywhere — mobile apps, cloud services, partner systems, and IoT devices. Threats have evolved to match: SQL injection, API abuse, credential stuffing, data exfiltration, and zero-day exploits. Compliance requirements have grown stricter, with GDPR, SOC 2, PCI-DSS, and HIPAA each demanding specific security controls.</p>
+  <div class="warning"><strong>Real-world example:</strong> In one client environment, a missing rate limit on a public API resulted in over 2 million requests in under an hour — effectively bringing down the system. Not a breach, but a complete lack of basic protection.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🧱</span> Defense in Depth: A Layered Approach</h2>
+  <p>Security is not a single solution — it is multiple layers working together. If one layer fails, the others continue to defend. Modern IBM i security follows a Zero Trust model: never trust, always verify — even for internal traffic.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-box">Internet</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">Firewall / WAF</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">API Gateway (Rate Limiting, Authentication)</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">Application Layer (Validation, Authorization)</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">IBM i (Object Authority, Exit Programs)</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">Database (Encryption, Audit)</div>
+  </div>
+
+  <p>The sections below address each layer in turn.</p>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🌐</span> Layer 1: Network Security</h2>
+  <p>The first line of defense is controlling what traffic can reach your system at all. The principle is simple: only allow what is explicitly necessary.</p>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">Firewall — Allow HTTPS only, block direct database ports</span></div>
+    <pre><code class="language-bash"># Allow HTTPS only from the internet
+ALLOW TCP 443 FROM ANY TO IBM_I_IP
+
+# Block direct database access from internet
+DENY TCP 8471 FROM ANY TO IBM_I_IP  # DRDA port
+DENY TCP 446  FROM ANY TO IBM_I_IP  # DDM port
+
+# Allow SSH for administration from restricted IPs only
+ALLOW TCP 22 FROM ADMIN_IPS TO IBM_I_IP</code></pre>
+  </div>
+
+  <p>A Web Application Firewall (WAF) sits in front of your API and filters malicious HTTP requests before they reach your application — blocking SQL injection attempts, cross-site scripting, known attack patterns, and malformed requests.</p>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🚪</span> Layer 2: API Gateway</h2>
+  <p>Your IBM i system should never be directly exposed to the internet. An API Gateway is the single point of entry for all external traffic, providing centralized authentication, rate limiting, IP filtering, request validation, and logging.</p>
+
+  <div class="callout"><strong>Non-negotiable rule:</strong> Internet → API Gateway → API Layer → IBM i. Never Internet → IBM i directly.</div>
+
+  <h3>Rate Limiting</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Express Rate Limiter</span></div>
+    <pre><code class="language-javascript">const rateLimit = require('express-rate-limit');
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15-minute window
+    max: 100,                  // Max 100 requests per IP
+    message: 'Too many requests from this IP, please try again later'
+});
+
+app.use('/api/', limiter);</code></pre>
+  </div>
+
+  <h3>API Key Validation</h3>
+  <p>Every API consumer must be identified. Validate API keys against IBM i to keep authentication centralized on the platform.</p>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — API Key Validation Procedure</span></div>
+    <pre><code class="language-javascript">**FREE
+
+Dcl-Proc validateApiKey Export;
+    Dcl-Pi *N Ind;
+        apiKey Char(64) Const;
+    End-Pi;
+
+    Dcl-S isValid Ind;
+
+    Exec SQL
+        SELECT CASE
+            WHEN EXPIRY_DATE >= CURRENT DATE THEN '1'
+            ELSE '0'
+        END
+        INTO :isValid
+        FROM APIKEYS
+        WHERE API_KEY = :apiKey
+          AND STATUS = 'ACTIVE';
+
+    If SQLCODE &lt;&gt; 0;
+        Return *Off;
+    EndIf;
+
+    Return isValid;
+End-Proc;</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🔑</span> Layer 3: Authentication</h2>
+  <p>JWT tokens are the recommended approach for external-facing APIs. Users authenticate once, receive a time-limited token, and include that token in all subsequent requests.</p>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — JWT Login Endpoint</span></div>
+    <pre><code class="language-javascript">const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await validateIBMiUser(username, password);
+
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const isValidPassword = await bcrypt.compare(password, user.hash);
+    if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign(
+        { username: user.username, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
+    res.json({ token });
+});</code></pre>
+  </div>
+
+  <p>For internal APIs, IBM i User Profile validation keeps authentication on the platform itself using the QSYGETPH API.</p>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">👤</span> IBM i Service Profile Strategy</h2>
+  <p>APIs should never run under powerful profiles like QSECOFR or application owners. Instead, create dedicated service profiles with the minimum required authority — the least privilege principle.</p>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Create Dedicated API Service Profile</span></div>
+    <pre><code class="language-bash">/* Create a profile with no special authority */
+CRTUSRPRF USRPRF(APIUSER)
+          PASSWORD(*NONE)
+          USRCLS(*USER)
+          SPCAUT(*NONE)
+          TEXT('API Service Profile')
+
+/* Grant access only to the required service program */
+GRTOBJAUT OBJ(MYLIB/CUSTSVC)
+          OBJTYPE(*SRVPGM)
+          USER(APIUSER)
+          AUT(*USE)</code></pre>
+  </div>
+
+  <div class="callout"><strong>📌 Why this matters:</strong> If the API profile is ever compromised, the blast radius is limited to only what that profile can access. Audit trails are also cleaner — API actions are clearly separated from user actions.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🔏</span> Layer 4: Authorization (RBAC)</h2>
+  <p>Authentication establishes who you are. Authorization determines what you can do. Role-Based Access Control managed in DB2 for i keeps permissions centralized and auditable.</p>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">SQL — RBAC Schema</span></div>
+    <pre><code class="language-sql">CREATE TABLE ROLES (
+    ROLE_ID   INT GENERATED ALWAYS AS IDENTITY,
+    ROLE_NAME VARCHAR(50) NOT NULL,
+    PRIMARY KEY (ROLE_ID)
+);
+
+CREATE TABLE USER_ROLES (
+    USER_ID VARCHAR(10) NOT NULL,
+    ROLE_ID INT NOT NULL,
+    PRIMARY KEY (USER_ID, ROLE_ID)
+);
+
+CREATE TABLE ROLE_PERMISSIONS (
+    ROLE_ID   INT NOT NULL,
+    RESOURCE  VARCHAR(100) NOT NULL,
+    OPERATION VARCHAR(20) NOT NULL,
+    PRIMARY KEY (ROLE_ID, RESOURCE, OPERATION)
+);</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Enforce Permission in API Middleware</span></div>
+    <pre><code class="language-javascript">const checkPermission = (resource, operation) => {
+    return async (req, res, next) => {
+        const authorized = await checkAuthorizationInIBMi(
+            req.user.username, resource, operation
+        );
+        if (!authorized) return res.status(403).json({ error: 'Insufficient permissions' });
+        next();
+    };
+};
+
+// Applied per route — clear, explicit, auditable
+app.post('/api/orders',
+    authenticateJWT,
+    checkPermission('orders', 'create'),
+    createOrder
+);</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🛡️</span> Layer 5: Input Validation and SQL Injection Prevention</h2>
+  <p>Never trust user input. Validate at both the API layer and the RPG layer — two checkpoints are better than one.</p>
+
+  <h3>The SQL Injection Risk</h3>
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Vulnerable — never build SQL by string concatenation</span></div>
+    <pre><code class="language-javascript">// Attack input: "' OR '1'='1"
+// Result: returns ALL customer records
+sqlStmt = 'SELECT * FROM CUSTMAST WHERE CUSTNO = ''' + customerId + '''';</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Safe — always use parameter markers</span></div>
+    <pre><code class="language-javascript">// Database treats :customerId as data, never as SQL code
+Exec SQL
+    SELECT * INTO :customer
+    FROM CUSTMAST
+    WHERE CUSTNO = :customerId;</code></pre>
+  </div>
+
+  <div class="callout"><strong>Rule:</strong> Always use parameter markers (<code>:variable</code>). Avoid dynamic SQL unless absolutely necessary. Never build SQL strings by concatenation with user-supplied input.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🔐</span> Layer 6: Encryption</h2>
+
+  <h3>Data in Transit — Always Use HTTPS</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">Apache — HTTPS Configuration on IBM i</span></div>
+    <pre><code class="language-apache">Listen *:443
+
+&lt;VirtualHost *:443&gt;
+    ServerName api.yourcompany.com
+
+    SSLEngine on
+    SSLCertificateFile    /path/to/certificate.crt
+    SSLCertificateKeyFile /path/to/private.key
+    SSLCertificateChainFile /path/to/chain.crt
+
+    # Strong cipher suites only — disable legacy protocols
+    SSLCipherSuite HIGH:!aNULL:!MD5
+    SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+
+    ProxyPass /api http://localhost:3000/api
+    ProxyPassReverse /api http://localhost:3000/api
+&lt;/VirtualHost&gt;</code></pre>
+  </div>
+
+  <h3>Data at Rest</h3>
+  <p>Encrypt sensitive fields at the application layer for maximum control. This applies to Social Security numbers, payment card data, personal health information, and financial data. Store encryption keys securely — never in source code — and implement key rotation policies.</p>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">📊</span> Layer 7: Audit and Monitoring</h2>
+
+  <h3>Enable the Audit Journal</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Enable System Auditing</span></div>
+    <pre><code class="language-bash">CRTJRNRCV JRNRCV(QAUDIT/AUDRCV0001) THRESHOLD(100000)
+CRTJRN JRN(QAUDIT/QAUDJRN) JRNRCV(QAUDIT/AUDRCV0001)
+
+CHGSYSVAL SYSVAL(QAUDLVL)
+          VALUE(*AUTFAIL *CREATE *DELETE *SECURITY)</code></pre>
+  </div>
+
+  <h3>Alert on Suspicious Activity</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Brute Force Detection</span></div>
+    <pre><code class="language-javascript">const failedAttempts = new Map();
+const THRESHOLD = { count: 5, window: 300000 }; // 5 failures in 5 minutes
+
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    const ip = req.ip;
+    const user = await validateUser(username, password);
+
+    if (!user) {
+        const key = `${ip}:${username}`;
+        const attempts = (failedAttempts.get(key) || [])
+            .filter(t => Date.now() - t &lt; THRESHOLD.window);
+        attempts.push(Date.now());
+        failedAttempts.set(key, attempts);
+
+        if (attempts.length >= THRESHOLD.count) {
+            await sendSecurityAlert({ type: 'BRUTE_FORCE', ip, username });
+        }
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    failedAttempts.delete(`${ip}:${username}`);
+    // Generate and return token...
+});</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🚨</span> Common Vulnerabilities and Fixes</h2>
+
+  <h3>Hardcoded Credentials</h3>
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Never hardcode credentials in source code</span></div>
+    <pre><code class="language-javascript">const conn = new Connection({ host: 'ibmi.company.com', user: 'ADMIN', password: 'Password123' });</code></pre>
+  </div>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Always load credentials from environment variables</span></div>
+    <pre><code class="language-javascript">const conn = new Connection({
+    host: process.env.IBMI_HOST,
+    user: process.env.IBMI_USER,
+    password: process.env.IBMI_PASSWORD
+});</code></pre>
+  </div>
+
+  <h3>Missing CORS Configuration</h3>
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Wildcard CORS allows any origin to access your API</span></div>
+    <pre><code class="language-javascript">app.use(cors({ origin: '*' }));</code></pre>
+  </div>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Restrict CORS to known, trusted origins only</span></div>
+    <pre><code class="language-javascript">app.use(cors({
+    origin: ['https://app.company.com', 'https://mobile.company.com'],
+    credentials: true
+}));</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">📋</span> Security Checklist Before Going Live</h2>
+  <ul class="checklist">
+    <li>HTTPS enabled with a valid certificate</li>
+    <li>Firewall configured to block unnecessary ports</li>
+    <li>WAF deployed to filter malicious requests</li>
+    <li>Rate limiting implemented on all endpoints</li>
+    <li>Authentication required for all non-public APIs</li>
+    <li>Authorization enforced for sensitive operations</li>
+    <li>Input validation on all user-supplied data</li>
+    <li>Parameterized queries used throughout — no dynamic SQL</li>
+    <li>Sensitive data encrypted at rest</li>
+    <li>Audit logging enabled</li>
+    <li>Monitoring and alerting configured</li>
+    <li>Security testing completed</li>
+    <li>Hardcoded credentials removed from all source code</li>
+    <li>CORS restricted to known origins</li>
+  </ul>
+</div>
+
+<div class="conclusion-box">
+  <h2><span class="emoji">💡</span> Conclusion</h2>
+  <p>IBM i security has always been strong. The challenge today is not securing the platform itself — it is securing how the platform is accessed. If your APIs are the new front door to your IBM i system, security is your first line of defense.</p>
+  <br>
+  <p>Apply security in layers, and keep these principles consistent across every API you build:</p>
+  <ul class="arrow-list" style="margin-top: 12px;">
+    <li>Defense in depth — multiple layers, each independent</li>
+    <li>Least privilege — minimum necessary access, always</li>
+    <li>Fail secure — default to deny, not allow</li>
+    <li>Monitor everything — logs and alerts are not optional</li>
+    <li>Test regularly — security is not a one-time exercise</li>
+  </ul>
+  <br>
+  <p>Extend IBM i's strong foundation for the API era, and you can safely connect to the modern world without compromising the integrity that makes the platform exceptional.</p>
+</div>
+
+<div class="article-footer">
+  <span>Last Updated: March 2026 · Version 2.0</span>
+  <span>Feel free to share with attribution.</span>
+</div>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>

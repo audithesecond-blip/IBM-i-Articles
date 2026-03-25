@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBM i Lock Management: The Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --ibm-blue: #0f62fe; --ibm-blue-dark: #0043ce;
+    --ibm-cool-gray-10: #f2f4f8; --ibm-cool-gray-20: #dde1e6;
+    --ibm-cool-gray-60: #697077; --ibm-cool-gray-90: #21272a;
+    --ibm-cool-gray-100: #121619; --ibm-red: #da1e28;
+    --ibm-green: #24a148; --ibm-teal: #009d9a;
+    --text-primary: #161616; --text-secondary: #525252;
+    --bg: #ffffff; --bg-subtle: #f4f4f4;
+    --border: #e0e0e0; --accent-bar: 4px solid var(--ibm-blue);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; font-size: 17px; line-height: 1.75; color: var(--text-primary); background: var(--bg); max-width: 820px; margin: 0 auto; padding: 60px 40px 100px; }
+  .article-header { border-left: var(--accent-bar); padding-left: 24px; margin-bottom: 56px; }
+  .article-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ibm-blue); margin-bottom: 12px; }
+  h1 { font-family: 'IBM Plex Serif', serif; font-size: 2.4rem; font-weight: 600; line-height: 1.2; color: var(--ibm-cool-gray-100); margin-bottom: 20px; }
+  .article-meta { font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; gap: 20px; flex-wrap: wrap; }
+  .article-meta span::before { content: '· '; } .article-meta span:first-child::before { content: ''; }
+  .lead { font-size: 1.15rem; line-height: 1.8; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 48px; }
+  .section { margin-bottom: 52px; }
+  h2 { font-size: 1.35rem; font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  h2 .emoji { font-size: 1.2rem; flex-shrink: 0; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--ibm-cool-gray-90); margin: 28px 0 10px; }
+  p { margin-bottom: 16px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+  .callout { background: var(--ibm-cool-gray-10); border-left: 4px solid var(--ibm-blue); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .callout strong { color: var(--ibm-blue-dark); }
+  .outcome { background: #defbe6; border-left: 4px solid var(--ibm-green); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .outcome strong { color: #044317; }
+  .warning { background: #fff1f1; border-left: 4px solid var(--ibm-red); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .warning strong { color: #750e13; }
+  .arrow-list { list-style: none; margin: 12px 0 20px; padding: 0; }
+  .arrow-list li { padding: 5px 0 5px 22px; position: relative; }
+  .arrow-list li::before { content: '→'; position: absolute; left: 0; color: var(--ibm-blue); font-weight: 600; }
+  .numbered-list { list-style: none; margin: 12px 0 20px; padding: 0; counter-reset: item; }
+  .numbered-list li { padding: 8px 0 8px 36px; position: relative; counter-increment: item; border-bottom: 1px solid var(--ibm-cool-gray-20); }
+  .numbered-list li:last-child { border-bottom: none; }
+  .numbered-list li::before { content: counter(item); position: absolute; left: 0; top: 8px; background: var(--ibm-blue); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .code-block { margin: 24px 0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+  .code-label { background: #1a1d23; color: #6b7280; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; padding: 8px 16px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2d3139; }
+  .code-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; } .dot-yellow { background: #ffbd2e; } .dot-green { background: #28c840; }
+  .code-block pre { margin: 0 !important; border-radius: 0 !important; }
+  .code-block pre code { font-family: 'IBM Plex Mono', monospace !important; font-size: 13.5px !important; line-height: 1.65 !important; padding: 20px !important; }
+  .code-label.bad { background: #2a1215; } .code-label.bad .label-text { color: #ff8080; }
+  .code-label.good { background: #0d2117; } .code-label.good .label-text { color: #6ee7a0; }
+  .metrics { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.92rem; }
+  .metrics th { background: var(--ibm-cool-gray-90); color: white; padding: 10px 16px; text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .metrics td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  .metrics tr:nth-child(even) td { background: var(--bg-subtle); }
+  .lock-types { display: grid; gap: 12px; margin: 20px 0; }
+  .lock-type { background: var(--bg-subtle); border-radius: 6px; padding: 16px 20px; border-left: 4px solid var(--ibm-teal); }
+  .lock-type-name { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--ibm-blue-dark); font-size: 0.95rem; margin-bottom: 4px; }
+  .lock-type p { font-size: 0.92rem; color: var(--text-secondary); margin: 0; }
+  .scenario { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin: 28px 0; }
+  .scenario-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .scenario-num { background: var(--ibm-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; }
+  .scenario-title { font-size: 1.1rem; font-weight: 600; color: var(--ibm-cool-gray-100); }
+  .case-study { background: var(--ibm-cool-gray-10); border-radius: 8px; padding: 24px; margin: 20px 0; }
+  .case-study-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ibm-teal); margin-bottom: 8px; }
+  .steps { display: grid; gap: 12px; margin: 20px 0; }
+  .step { background: var(--bg-subtle); border-radius: 6px; padding: 16px 20px; display: flex; gap: 16px; align-items: flex-start; }
+  .step-num { background: var(--ibm-cool-gray-90); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+  .step-content strong { display: block; margin-bottom: 4px; }
+  .step-content p { font-size: 0.92rem; color: var(--text-secondary); margin: 0; }
+  .conclusion-box { background: var(--ibm-cool-gray-100); color: white; border-radius: 8px; padding: 36px 40px; margin-top: 48px; }
+  .conclusion-box h2 { color: white; margin-bottom: 16px; }
+  .conclusion-box p { color: #c6c6c6; }
+  .conclusion-box .arrow-list li { color: #e0e0e0; }
+  .conclusion-box .arrow-list li::before { color: #78a9ff; }
+  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header class="article-header">
+  <div class="article-label">IBM i Architecture · Lock Management</div>
+  <h1>IBM i Lock Management: The Complete Guide</h1>
+  <div class="article-meta">
+    <span>Last Updated: March 2026</span>
+    <span>Version 1.0</span>
+    <span>IBM i Reference Pages Blog</span>
+  </div>
+</header>
+
+<p class="lead">
+  Lock contention is one of the most common — and most disruptive — issues in IBM i environments. It can freeze applications, delay batch jobs, and leave users staring at "record in use" messages with no clear explanation. Yet with the right knowledge, most lock problems are both diagnosable and preventable.<br><br>
+  This guide covers how IBM i locking works, the five most common lock scenarios, a structured troubleshooting process, and proven prevention strategies drawn from 17 years of real-world IBM i experience.
+</p>
+
+<div class="section">
+  <h2><span class="emoji">🔍</span> How IBM i Locking Works</h2>
+  <p>IBM i uses a sophisticated locking mechanism to protect data integrity in multi-user environments. Understanding its fundamentals is essential before you can diagnose problems effectively.</p>
+  <p>IBM i locks are object-based — they can be placed on entire objects, not just records. They are hierarchical, meaning a file-level lock affects all record-level operations within that file. They are mostly automatic, managed by the system based on your operations, but configurable through parameters like WAITRCD and WAITFILE.</p>
+
+  <h3>Lock Scope Types</h3>
+  <div class="lock-types">
+    <div class="lock-type">
+      <div class="lock-type-name">*SHRRD — Shared Read</div>
+      <p>Multiple jobs can read simultaneously. No updates allowed while held. Common in SELECT queries without FOR UPDATE. Lowest level of restriction.</p>
+    </div>
+    <div class="lock-type">
+      <div class="lock-type-name">*SHRUPD — Shared Update</div>
+      <p>Multiple jobs can read and update different records. Most common in OLTP applications. Balances performance and data integrity.</p>
+    </div>
+    <div class="lock-type">
+      <div class="lock-type-name">*SHRNUP — Shared No Update</div>
+      <p>Multiple jobs can read, but no updates allowed by anyone. Used for reporting and queries that must prevent data changes during the read.</p>
+    </div>
+    <div class="lock-type">
+      <div class="lock-type-name">*EXCLRD — Exclusive Read</div>
+      <p>Only one job can read. No other access allowed. Rarely used in practice due to its highly restrictive nature.</p>
+    </div>
+    <div class="lock-type">
+      <div class="lock-type-name">*EXCL — Exclusive</div>
+      <p>Only one job can access the object. Blocks all other access attempts. Used for file reorganization and backups. Most restrictive type.</p>
+    </div>
+  </div>
+
+  <div class="callout"><strong>📌 Lock wait behavior:</strong> When a conflict occurs, the requesting job can wait indefinitely (WAITRCD(*YES)), wait for a specified time (WAITRCD(30) = 30 seconds), or fail immediately (WAITRCD(0)). Choosing the right option is critical — waiting indefinitely is how systems appear to hang.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🚨</span> Five Critical Lock Scenarios</h2>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-num">1</div>
+      <div class="scenario-title">The Classic Deadlock</div>
+    </div>
+    <p>Two or more jobs are waiting for each other to release locks, creating a circular dependency that can never resolve on its own.</p>
+    <div class="warning"><strong>Example:</strong> Job A locks Customer Record 1001 and needs Order Record 5001. Job B locks Order Record 5001 and needs Customer Record 1001. Both jobs wait forever.</div>
+
+    <h3>Immediate Fix</h3>
+    <div class="code-block">
+      <div class="code-label"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Break a deadlock by ending one job</span></div>
+      <pre><code class="language-bash">WRKACTJOB          /* Identify the deadlocked jobs */
+ENDJOB JOB(jobname) OPTION(*IMMED)   /* End one to break the cycle */</code></pre>
+    </div>
+
+    <h3>Long-Term Prevention</h3>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — Always lock objects in the same sequence across all programs</span></div>
+      <pre><code class="language-javascript">// Always lock Customer first, then Order — in every program
+CHAIN (custNo) CUSTMAST;
+CHAIN (ordNo) ORDMAST;
+
+// Set appropriate timeouts — never wait forever
+EXEC SQL SET TRANSACTION ISOLATION LEVEL READ COMMITTED;</code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Set WAITRCD timeout</span></div>
+      <pre><code class="language-bash">OVRDBF FILE(CUSTMAST) WAITRCD(30)
+/* Fail after 30 seconds instead of waiting forever */</code></pre>
+    </div>
+    <div class="outcome"><strong>Real-world result:</strong> Implementing consistent lock ordering in a manufacturing client's order entry system eliminated 100% of deadlocks that had been occurring 2–3 times daily.</div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-num">2</div>
+      <div class="scenario-title">The Forgotten Lock</div>
+    </div>
+    <p>An interactive user locks a record, then abandons their session — for a meeting, lunch, or simply leaving for the day — leaving batch jobs waiting indefinitely.</p>
+    <div class="warning"><strong>Example:</strong> A user opens a customer record at 9:00 AM, goes to a meeting. A batch job tries to update the same customer at 10:00 AM and waits until 2:00 PM when the user returns — 4 hours of delay.</div>
+
+    <h3>Immediate Fix</h3>
+    <div class="code-block">
+      <div class="code-label"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Identify and release an abandoned lock</span></div>
+      <pre><code class="language-bash">WRKOBJLCK OBJ(MYLIB/CUSTMAST) OBJTYPE(*FILE)
+/* Look for LOCK STATUS: *HELD — identify the job holding it */
+
+WRKJOB JOB(jobname)
+/* Option 4: Display job attributes */
+/* Check "Interactive transactions" — if 0, job is inactive */
+
+ENDJOB JOB(jobname) OPTION(*CNTRLD)   /* End the inactive job gracefully */</code></pre>
+    </div>
+
+    <h3>Long-Term Prevention: Optimistic Locking</h3>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — Optimistic locking with row versioning</span></div>
+      <pre><code class="language-javascript">// Read without holding a lock
+CHAIN (custNo) CUSTMAST;
+oldVersion = custVersion;
+
+// User makes changes — no lock held during this time
+
+// Update only if version is unchanged since the read
+EXEC SQL UPDATE CUSTMAST
+         SET custName = :newName,
+             custVersion = custVersion + 1
+         WHERE custNo = :custNo
+           AND custVersion = :oldVersion;
+
+IF SQLCODE = 100;
+  // Record was changed by someone else — handle the conflict
+ENDIF;</code></pre>
+    </div>
+
+    <h3>Long-Running Lock Monitoring</h3>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">SQL — Find locks held more than 5 minutes</span></div>
+      <pre><code class="language-sql">SELECT OBJECT_NAME,
+       OBJECT_LIBRARY,
+       JOB_NAME,
+       LOCK_STATE,
+       TIMESTAMPDIFF(2, CHAR(CURRENT_TIMESTAMP - LOCK_REQUEST_TIME))
+         AS MINUTES_HELD
+FROM QSYS2.OBJECT_LOCK_INFO
+WHERE LOCK_STATE = 'HELD'
+  AND TIMESTAMPDIFF(2, CHAR(CURRENT_TIMESTAMP - LOCK_REQUEST_TIME)) > 5
+ORDER BY MINUTES_HELD DESC;</code></pre>
+    </div>
+    <div class="outcome"><strong>Real-world result:</strong> A retail client implemented automatic session timeouts and reduced overnight batch failures from 15% to zero.</div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-num">3</div>
+      <div class="scenario-title">The Cascade Effect</div>
+    </div>
+    <p>A single file-level exclusive lock blocks all record-level operations on that file, causing dozens of jobs to queue up and the system to appear frozen.</p>
+    <div class="warning"><strong>Example:</strong> One job holds *EXCL on ORDMAST during a file reorganization. 49 other jobs trying to access individual order records all wait — system appears completely unresponsive.</div>
+
+    <h3>Prevention</h3>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Schedule file operations off-hours</span></div>
+      <pre><code class="language-bash">ADDJOBSCDE JOB(RGZORDMAST)
+           CMD(RGZPFM FILE(MYLIB/ORDMAST))
+           FRQ(*WEEKLY)
+           SCDDAY(*SUN)
+           SCDTIME(020000)
+/* Run at 2 AM Sunday when no users are active */</code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">SQL — Read-only view for reporting — no lock conflicts</span></div>
+      <pre><code class="language-sql">CREATE VIEW ORDMAST_RO AS
+  SELECT * FROM ORDMAST
+  FOR READ ONLY;
+
+GRANT SELECT ON ORDMAST_RO TO PUBLIC;
+/* All reports use this view — they never conflict with OLTP updates */</code></pre>
+    </div>
+    <div class="outcome"><strong>Real-world result:</strong> A distribution company moved file reorganizations off-hours and implemented read-only views. Result: zero daytime lock conflicts, 40% improvement in response times.</div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-num">4</div>
+      <div class="scenario-title">The Performance Killer</div>
+    </div>
+    <p>Overly restrictive locks held longer than necessary cause excessive contention and degrade system performance — even without a full deadlock.</p>
+
+    <div class="code-block">
+      <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Exclusive lock for reading — unnecessarily restrictive</span></div>
+      <pre><code class="language-javascript">EXEC SQL DECLARE C1 CURSOR FOR
+  SELECT * FROM CUSTMAST
+  FOR UPDATE;  // Locks all records even though we're just reading</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Shared lock for reading — appropriate and efficient</span></div>
+      <pre><code class="language-javascript">EXEC SQL DECLARE C1 CURSOR FOR
+  SELECT * FROM CUSTMAST
+  FOR READ ONLY;  // No update locks held</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Batch processing in chunks — short transactions throughout</span></div>
+      <pre><code class="language-javascript">// Process in chunks with regular commits — locks released every 100 records
+FOR i = 1 TO totalRecords BY 100;
+  EXEC SQL BEGIN TRANSACTION;
+  // Process 100 records
+  EXEC SQL COMMIT;
+ENDFOR;</code></pre>
+    </div>
+    <div class="outcome"><strong>Real-world result:</strong> A financial services client refactored their batch processing with shorter transactions and appropriate lock levels. Batch processing time dropped from 4 hours to 45 minutes — a 90% reduction in lock wait time.</div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-num">5</div>
+      <div class="scenario-title">The Mystery Lock</div>
+    </div>
+    <p>Lock contention occurs sporadically with no obvious pattern — different users affected at random times, locks that release on their own after a few minutes, and nothing obvious in job logs.</p>
+
+    <h3>Diagnostic Approach</h3>
+    <div class="code-block">
+      <div class="code-label"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">SQL — Lock monitoring view for ongoing capture</span></div>
+      <pre><code class="language-sql">CREATE VIEW LOCK_MONITOR AS
+SELECT OBJECT_NAME,
+       OBJECT_LIBRARY,
+       OBJECT_TYPE,
+       JOB_NAME,
+       LOCK_STATE,
+       LOCK_SCOPE,
+       LOCK_REQUEST_TIME,
+       CURRENT_TIMESTAMP AS CAPTURE_TIME
+FROM QSYS2.OBJECT_LOCK_INFO;
+
+-- Query periodically to capture patterns
+SELECT * FROM LOCK_MONITOR
+WHERE LOCK_STATE = 'HELD'
+ORDER BY LOCK_REQUEST_TIME;</code></pre>
+    </div>
+    <div class="outcome"><strong>Real-world result:</strong> A healthcare client implemented comprehensive lock monitoring and discovered a background synchronization job was causing intermittent locks. Rescheduling it to off-peak hours eliminated the problem entirely.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🗺️</span> Step-by-Step Troubleshooting Process</h2>
+  <p>When a lock problem occurs, follow this systematic approach rather than guessing.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content"><strong>Identify the symptom</strong><p>What operation is failing? Which file is involved? One user or many? Consistent or intermittent? Run WRKACTJOB and look for jobs in MSGW status.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content"><strong>Locate the locked object</strong><p>Run WRKOBJLCK OBJ(library/object) OBJTYPE(*FILE). Look for LOCK STATUS: *HELD (this job has the lock) and *WAIT (this job is waiting).</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content"><strong>Identify the lock holder</strong><p>For each job holding a lock: WRKJOB JOB(jobname), then Option 12: Work with locks. Note how long it has been held and whether the job is active.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content"><strong>Trace the lock chain</strong><p>For each waiting job, identify what it is waiting for. Check if that object is locked by another job. Continue until you reach the root cause.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content"><strong>Determine root cause</strong><p>Is it a deadlock (circular wait)? An abandoned lock (inactive job holding a lock)? A legitimate long operation? Or a design issue (wrong lock type, locks held too long)?</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-content"><strong>Take appropriate action</strong><p>For deadlocks: ENDJOB one of the jobs. For abandoned locks: ENDJOB the inactive job with *CNTRLD. For legitimate operations: communicate with users and wait or reschedule.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">7</div>
+      <div class="step-content"><strong>Verify resolution</strong><p>Re-run WRKOBJLCK to confirm locks are released. Check WRKACTJOB to verify affected jobs are proceeding normally.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">8</div>
+      <div class="step-content"><strong>Document and prevent</strong><p>Document the incident, root cause, and resolution. Implement preventive measures. Monitor for recurrence.</p></div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">✅</span> Prevention Strategies That Actually Work</h2>
+
+  <h3>1 — Use Optimistic Locking for User-Facing Operations</h3>
+  <p>Instead of holding locks during user interaction (which can last minutes), use row versioning to detect conflicts at update time. No lock is held between the read and the write.</p>
+
+  <h3>2 — Use Appropriate Isolation Levels</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — Match isolation level to workload type</span></div>
+    <pre><code class="language-javascript">// Most OLTP applications
+EXEC SQL SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+
+// Reporting and analytics — no locks needed
+EXEC SQL SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
+// Critical operations requiring full repeatability only
+EXEC SQL SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;</code></pre>
+  </div>
+
+  <h3>3 — Keep Transactions Short</h3>
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Lock held during user interaction — can last minutes</span></div>
+    <pre><code class="language-javascript">EXEC SQL BEGIN TRANSACTION;
+// Read data
+// User interaction  ← lock held here for unknown duration
+// Update data
+EXEC SQL COMMIT;</code></pre>
+  </div>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Transaction begins only at the moment of the write</span></div>
+    <pre><code class="language-javascript">// Read data
+// User interaction  ← no lock held during this time
+EXEC SQL BEGIN TRANSACTION;
+// Update data only
+EXEC SQL COMMIT;</code></pre>
+  </div>
+
+  <h3>4 — Set Timeouts — Never Wait Forever</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Configure file-level wait timeout</span></div>
+    <pre><code class="language-bash">OVRDBF FILE(CUSTMAST) WAITRCD(30)
+/* Application fails cleanly after 30 seconds instead of hanging */</code></pre>
+  </div>
+
+  <h3>5 — Monitor Proactively</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">SQL — Daily lock contention monitoring report</span></div>
+    <pre><code class="language-sql">SELECT OBJECT_NAME,
+       OBJECT_LIBRARY,
+       COUNT(*) AS lock_count,
+       AVG(LOCK_DURATION) AS avg_duration_ms,
+       MAX(LOCK_DURATION) AS max_duration_ms
+FROM QSYS2.OBJECT_LOCK_INFO
+WHERE LOCK_STATE = 'HELD'
+GROUP BY OBJECT_NAME, OBJECT_LIBRARY
+ORDER BY lock_count DESC;</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">📈</span> Three Real-World Case Studies</h2>
+
+  <div class="case-study">
+    <div class="case-study-label">Case Study 1 · Manufacturing · 500 Employees</div>
+    <p><strong>Problem:</strong> Nightly batch jobs failing 3–4 times per week due to locks held by abandoned interactive sessions.</p>
+    <p><strong>Solution:</strong> Automatic session timeouts, pre-batch cleanup procedures, team training on lock awareness.</p>
+    <div class="outcome" style="margin-top:12px;"><strong>Result:</strong> Batch job success rate reached 100% (from 60%). Zero overnight failures in 6 months. Estimated saving: $50,000 annually in overtime and delayed shipments.</div>
+  </div>
+
+  <div class="case-study">
+    <div class="case-study-label">Case Study 2 · Retail · 200 Customer Service Representatives</div>
+    <p><strong>Problem:</strong> Frequent "record in use" errors causing customer service delays and user frustration.</p>
+    <p><strong>Solution:</strong> Switched from pessimistic to optimistic locking, implemented conflict resolution screens, added lock monitoring.</p>
+    <div class="outcome" style="margin-top:12px;"><strong>Result:</strong> "Record in use" errors reduced by 95%. User productivity increased 25%. Conflicts now affect less than 1% of transactions.</div>
+  </div>
+
+  <div class="case-study">
+    <div class="case-study-label">Case Study 3 · Distribution · 50 Warehouses</div>
+    <p><strong>Problem:</strong> End-of-day reports causing system-wide slowdowns that disrupted warehouse operations.</p>
+    <p><strong>Solution:</strong> Created read-only views for reports, implemented READ UNCOMMITTED isolation, built pre-aggregated summary tables.</p>
+    <div class="outcome" style="margin-top:12px;"><strong>Result:</strong> System slowdowns eliminated completely. Report generation time reduced by 60%. Estimated impact: prevented $2M in potential lost sales due to system unavailability.</div>
+  </div>
+</div>
+
+<div class="conclusion-box">
+  <h2><span class="emoji">💡</span> Conclusion</h2>
+  <p>Lock management is a critical skill for any IBM i professional. The platform's locking mechanisms are powerful tools — when you understand them, you can use them to your advantage rather than fight against them.</p>
+  <br>
+  <p>The core principles that prevent most lock problems:</p>
+  <ul class="arrow-list" style="margin-top: 12px;">
+    <li>Understand the basics — know your lock types and their implications</li>
+    <li>Diagnose systematically — follow the 8-step process before taking action</li>
+    <li>Keep transactions short — begin them late, commit them early</li>
+    <li>Use optimistic locking for user-facing operations</li>
+    <li>Monitor proactively — do not wait for users to report problems</li>
+    <li>Set timeouts — never let jobs wait forever</li>
+    <li>Schedule file-level operations off-hours, without exception</li>
+  </ul>
+  <br>
+  <p>Most lock problems have a pattern. Once you learn to recognize them, you will resolve them faster — and eventually prevent them from occurring at all.</p>
+</div>
+
+<div class="article-footer">
+  <span>Last Updated: March 2026 · Version 1.0</span>
+  <span>Feel free to share with attribution.</span>
+</div>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>

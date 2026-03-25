@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Managing Lock Contention on IBM i in Modern Architectures</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --ibm-blue: #0f62fe;
+    --ibm-blue-dark: #0043ce;
+    --ibm-cool-gray-10: #f2f4f8;
+    --ibm-cool-gray-20: #dde1e6;
+    --ibm-cool-gray-60: #697077;
+    --ibm-cool-gray-90: #21272a;
+    --ibm-cool-gray-100: #121619;
+    --ibm-red: #da1e28;
+    --ibm-green: #24a148;
+    --ibm-teal: #009d9a;
+    --text-primary: #161616;
+    --text-secondary: #525252;
+    --bg: #ffffff;
+    --bg-subtle: #f4f4f4;
+    --border: #e0e0e0;
+    --accent-bar: 4px solid var(--ibm-blue);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--text-primary);
+    background: var(--bg);
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 60px 40px 100px;
+  }
+
+  /* Header */
+  .article-header {
+    border-left: var(--accent-bar);
+    padding-left: 24px;
+    margin-bottom: 56px;
+  }
+
+  .article-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ibm-blue);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ibm-cool-gray-100);
+    margin-bottom: 20px;
+  }
+
+  .article-meta {
+    font-size: 13px;
+    color: var(--ibm-cool-gray-60);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .article-meta span::before {
+    content: '· ';
+  }
+  .article-meta span:first-child::before {
+    content: '';
+  }
+
+  /* Lead paragraph */
+  .lead {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 40px;
+    margin-bottom: 48px;
+  }
+
+  /* Section headings */
+  .section {
+    margin-bottom: 52px;
+  }
+
+  h2 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--ibm-cool-gray-100);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2 .emoji {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ibm-cool-gray-90);
+    margin: 28px 0 10px;
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: var(--text-primary);
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* Key callout */
+  .callout {
+    background: var(--ibm-cool-gray-10);
+    border-left: 4px solid var(--ibm-blue);
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.95rem;
+    color: var(--ibm-cool-gray-90);
+  }
+
+  .callout strong {
+    color: var(--ibm-blue-dark);
+  }
+
+  /* Result/outcome callout */
+  .outcome {
+    background: #defbe6;
+    border-left: 4px solid var(--ibm-green);
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.95rem;
+  }
+
+  .outcome strong { color: #044317; }
+
+  .warning {
+    background: #fff1f1;
+    border-left: 4px solid var(--ibm-red);
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.95rem;
+  }
+
+  .warning strong { color: #750e13; }
+
+  /* Arrow list */
+  .arrow-list {
+    list-style: none;
+    margin: 12px 0 20px;
+    padding: 0;
+  }
+
+  .arrow-list li {
+    padding: 5px 0 5px 22px;
+    position: relative;
+    color: var(--text-primary);
+  }
+
+  .arrow-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--ibm-blue);
+    font-weight: 600;
+  }
+
+  /* Numbered list */
+  .numbered-list {
+    list-style: none;
+    margin: 12px 0 20px;
+    padding: 0;
+    counter-reset: item;
+  }
+
+  .numbered-list li {
+    padding: 8px 0 8px 36px;
+    position: relative;
+    counter-increment: item;
+    border-bottom: 1px solid var(--ibm-cool-gray-20);
+  }
+
+  .numbered-list li:last-child { border-bottom: none; }
+
+  .numbered-list li::before {
+    content: counter(item);
+    position: absolute;
+    left: 0;
+    top: 8px;
+    background: var(--ibm-blue);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Code blocks */
+  .code-block {
+    margin: 24px 0;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  }
+
+  .code-label {
+    background: #1a1d23;
+    color: #6b7280;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 8px 16px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #2d3139;
+  }
+
+  .code-label .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #28c840; }
+
+  .code-block pre {
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .code-block pre code {
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 13.5px !important;
+    line-height: 1.65 !important;
+    padding: 20px !important;
+  }
+
+  /* Bad/good code labels */
+  .code-label.bad { background: #2a1215; }
+  .code-label.bad .label-text { color: #ff8080; }
+  .code-label.good { background: #0d2117; }
+  .code-label.good .label-text { color: #6ee7a0; }
+
+  /* Metrics table */
+  .metrics {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.92rem;
+  }
+
+  .metrics th {
+    background: var(--ibm-cool-gray-90);
+    color: white;
+    padding: 10px 16px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .metrics td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .metrics tr:nth-child(even) td { background: var(--bg-subtle); }
+
+  .metric-good { color: var(--ibm-green); font-weight: 600; }
+  .metric-bad { color: var(--ibm-red); font-weight: 600; }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: var(--ibm-cool-gray-10);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px;
+    margin: 20px 0;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+  }
+
+  .arch-box {
+    display: inline-block;
+    background: white;
+    border: 2px solid var(--ibm-blue);
+    border-radius: 4px;
+    padding: 8px 24px;
+    font-weight: 500;
+    color: var(--ibm-cool-gray-100);
+    margin: 4px 0;
+  }
+
+  .arch-arrow {
+    display: block;
+    color: var(--ibm-blue);
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  /* Phase roadmap */
+  .phases {
+    display: grid;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .phase {
+    background: var(--bg-subtle);
+    border-radius: 6px;
+    padding: 18px 20px;
+    border-left: 4px solid var(--ibm-teal);
+  }
+
+  .phase-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ibm-teal);
+    margin-bottom: 4px;
+  }
+
+  .phase-title {
+    font-weight: 600;
+    color: var(--ibm-cool-gray-100);
+    margin-bottom: 6px;
+  }
+
+  .phase p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Conclusion box */
+  .conclusion-box {
+    background: var(--ibm-cool-gray-100);
+    color: white;
+    border-radius: 8px;
+    padding: 36px 40px;
+    margin-top: 48px;
+  }
+
+  .conclusion-box h2 {
+    color: white;
+    margin-bottom: 16px;
+  }
+
+  .conclusion-box p {
+    color: #c6c6c6;
+  }
+
+  .conclusion-box .arrow-list li {
+    color: #e0e0e0;
+  }
+
+  .conclusion-box .arrow-list li::before {
+    color: #78a9ff;
+  }
+
+  /* Footer */
+  .article-footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--ibm-cool-gray-60);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header class="article-header">
+  <div class="article-label">IBM i Architecture · Modern Integration</div>
+  <h1>Managing Lock Contention on IBM i in Modern Architectures</h1>
+  <div class="article-meta">
+    <span>Last Updated: March 2026</span>
+    <span>Version 2.0</span>
+    <span>IBM i Reference Pages Blog</span>
+  </div>
+</header>
+
+<p class="lead">
+  IBM i has always excelled at data integrity. Its record-level locking and commitment control mechanisms are battle-tested and reliable. But as IBM i environments evolve to support REST APIs, cloud integrations, and AI-driven analytics, the assumptions those locking mechanisms were built on no longer hold.<br><br>
+  This article explains why modern architectures create new locking challenges on IBM i — and how to solve them with practical, proven patterns.
+</p>
+
+<!-- SECTION 1 -->
+<div class="section">
+  <h2><span class="emoji">🔍</span> How IBM i Locking Was Designed to Work</h2>
+
+  <p>To understand the problem, it helps to look at the original design assumptions.</p>
+
+  <p>Classic IBM i environments were built for a small number of interactive users — typically 20 to 100 — with predictable, human-paced transactions. A user would initiate a task, the system would process it in seconds, and locks would be held for milliseconds. Transaction boundaries were clear, network latency was minimal, and commitment control was managed explicitly by the application.</p>
+
+  <p>In that world, a 50ms lock duration was never a problem.</p>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 2 -->
+<div class="section">
+  <h2><span class="emoji">⚡</span> What Has Changed</h2>
+
+  <p>Modern IBM i systems operate under very different conditions.</p>
+
+  <p>Where you once had 50 concurrent users, you now have hundreds or thousands of concurrent API requests. Where transactions once took seconds, machine-driven processes now complete in milliseconds — or time out trying. And where the path from application to database was once direct, today it runs through API gateways, load balancers, service meshes, and caching layers, each adding latency.</p>
+
+  <div class="callout">
+    <strong>The core problem:</strong> A 50ms lock that was perfectly acceptable in a traditional environment becomes a serious bottleneck when extended to 200ms by network latency, multiplied across thousands of simultaneous requests.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 3 -->
+<div class="section">
+  <h2><span class="emoji">🛡️</span> The Service Layer: Your First Line of Defense</h2>
+
+  <p>Many IBM i modernization projects start by exposing database tables directly through APIs. This seems simple, but it creates real problems — no centralized transaction control, inconsistent lock patterns across endpoints, and business logic scattered across multiple layers.</p>
+
+  <p>A better approach introduces a service layer between your API and your tables:</p>
+
+  <div class="arch-diagram">
+    <div class="arch-box">API Layer</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">Service Program / SQL Stored Procedure</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">DB2 for i Tables</div>
+  </div>
+
+  <div class="callout">
+    <strong>📌 Key principle:</strong> The lock is acquired, used, and released inside the procedure. The API layer never holds a lock while doing other work.
+  </div>
+
+  <h3>Example: SQL Stored Procedure</h3>
+  <p>The following procedure handles an inventory lookup. It acquires and releases its lock entirely within procedure execution.</p>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">SQL — GET_INVENTORY Stored Procedure</span>
+    </div>
+    <pre><code class="language-sql">CREATE PROCEDURE GET_INVENTORY(
+    IN P_ITEM_ID CHAR(10),
+    OUT P_QTY_ON_HAND INT,
+    OUT P_LAST_UPDATE TIMESTAMP,
+    OUT P_STATUS_CODE INT
+)
+LANGUAGE SQL
+SPECIFIC GET_INV_001
+BEGIN
+    DECLARE SQLCODE INT DEFAULT 0;
+
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+
+    SELECT QTY_ON_HAND, LAST_UPDATE
+    INTO P_QTY_ON_HAND, P_LAST_UPDATE
+    FROM INVENTORY
+    WHERE ITEM_ID = P_ITEM_ID;
+
+    IF SQLCODE = 0 THEN
+        SET P_STATUS_CODE = 0;
+    ELSE
+        SET P_STATUS_CODE = SQLCODE;
+    END IF;
+
+    COMMIT;
+END;
+
+GRANT EXECUTE ON PROCEDURE GET_INVENTORY TO APIUSER;</code></pre>
+  </div>
+
+  <h3>Example: RPG Service Program</h3>
+  <p>The same principle applies in RPG. Note the immediate COMMIT after the read — this is what keeps lock duration short.</p>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">RPGLE — GetInventory Service Program</span>
+    </div>
+    <pre><code class="language-javascript">**FREE
+DCL-PROC GetInventory EXPORT;
+    DCL-PI *N INT;
+        itemId CHAR(10) CONST;
+        qtyOnHand INT;
+        lastUpdate TIMESTAMP;
+    END-PI;
+
+    DCL-S returnCode INT INZ(0);
+
+    IF NOT %OPEN(INVENTORY);
+        OPEN INVENTORY;
+    ENDIF;
+
+    CHAIN (itemId) INVENTORY;
+
+    IF %FOUND(INVENTORY);
+        qtyOnHand = INV_QTY;
+        lastUpdate = INV_LUPDT;
+        COMMIT;              // Release lock immediately after read
+        returnCode = 0;
+    ELSE;
+        returnCode = -1;
+    ENDIF;
+
+    RETURN returnCode;
+END-PROC;</code></pre>
+  </div>
+
+  <h3>Example: Calling the Service from Node.js</h3>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">JavaScript — Node.js API calling the service procedure</span>
+    </div>
+    <pre><code class="language-javascript">app.get('/inventory/:itemId', async (req, res) => {
+    let connection;
+    try {
+        connection = await ibmiJdbcPool.reserve();
+
+        const result = await connection.conn.prepareCall(
+            '{CALL GET_INVENTORY(?, ?, ?, ?)}'
+        );
+
+        result.setString(1, req.params.itemId);
+        result.registerOutParameter(2, java.sql.Types.INTEGER);
+        result.registerOutParameter(3, java.sql.Types.TIMESTAMP);
+        result.registerOutParameter(4, java.sql.Types.INTEGER);
+
+        await result.execute();
+
+        const statusCode = result.getInt(4);
+
+        if (statusCode === 0) {
+            res.json({
+                itemId: req.params.itemId,
+                qtyOnHand: result.getInt(2),
+                lastUpdate: result.getTimestamp(3)
+            });
+        } else {
+            res.status(404).json({ error: 'Item not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    } finally {
+        if (connection) await ibmiJdbcPool.release(connection);
+    }
+});</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 4 -->
+<div class="section">
+  <h2><span class="emoji">🚨</span> Challenge 1: API-Driven Lock Amplification</h2>
+
+  <p>Exposing IBM i data through REST APIs extends lock duration in ways that are easy to overlook. Three factors are usually responsible:</p>
+
+  <ol class="numbered-list">
+    <li><strong>Network latency</strong> — A traditional on-premise app might reach IBM i in 5ms. A cloud-hosted API server may take 150ms or more. Every millisecond of that round trip is time the lock is held.</li>
+    <li><strong>Connection pooling</strong> — When connections are held open longer than necessary, the locks associated with them are also held longer. Pool exhaustion causes cascading delays as requests queue up.</li>
+    <li><strong>Retry logic</strong> — Automatic retries on failure seem helpful, but during periods of contention they amplify the problem. Every retry is another lock acquisition attempt.</li>
+  </ol>
+
+  <h3>🔴 A Real-World Example</h3>
+  <p>An e-commerce company exposed inventory data through a REST API. The implementation looked reasonable on the surface — but had one critical flaw: the database connection and the lock were held open for the entire request, including an external pricing API call.</p>
+
+  <div class="code-block">
+    <div class="code-label bad">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">❌ Problematic — lock held for entire request duration</span>
+    </div>
+    <pre><code class="language-javascript">app.get('/inventory/:itemId', async (req, res) => {
+    const connection = await ibmiJdbcPool.getConnection();
+
+    const result = await connection.query(
+        'SELECT * FROM INVENTORY WHERE ITEM_ID = ?',
+        [req.params.itemId]
+    );
+
+    // Lock still held during data enrichment
+    const enrichedData = await enrichInventoryData(result);
+
+    // Lock still held during this external API call
+    const pricing = await externalPricingService.getPrice(result.itemId);
+
+    connection.release();  // Finally released — too late
+
+    res.json({ ...enrichedData, pricing });
+});</code></pre>
+  </div>
+
+  <div class="warning">
+    <strong>Result:</strong> At 500 concurrent users, 30% of requests were timing out. The lock was held for the full 200ms+ round trip to an external pricing service.
+  </div>
+
+  <h3>🟢 The Fix</h3>
+  <p>Release the connection as soon as you have the data. Do all subsequent processing without holding the lock.</p>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">✅ Optimized — connection released immediately after data retrieval</span>
+    </div>
+    <pre><code class="language-javascript">app.get('/inventory/:itemId', async (req, res) => {
+    let inventoryData;
+
+    // Scope 1: acquire, query, commit, release
+    {
+        const connection = await ibmiJdbcPool.getConnection();
+        try {
+            inventoryData = await connection.query(
+                'SELECT ITEM_ID, QTY_ON_HAND, LAST_UPDATE FROM INVENTORY WHERE ITEM_ID = ?',
+                [req.params.itemId]
+            );
+            await connection.commit();
+        } finally {
+            connection.release(); // Back to pool after ~50ms
+        }
+    }
+
+    // Scope 2: all processing happens without any lock held
+    const enrichedData = await enrichInventoryData(inventoryData);
+    const pricing = await externalPricingService.getPrice(inventoryData.itemId);
+
+    res.json({ ...enrichedData, pricing });
+});</code></pre>
+  </div>
+
+  <div class="outcome">
+    <strong>Results after this single change:</strong>
+    <ul class="arrow-list" style="margin-top:8px;">
+      <li>Lock duration: 200ms → 50ms <strong>(75% reduction)</strong></li>
+      <li>Timeout rate: 30% → 2%</li>
+      <li>Throughput: more than doubled (500 → 1,200 req/s)</li>
+    </ul>
+  </div>
+
+  <h3>Additional Best Practices</h3>
+  <p>Use separate connection pools for reads and writes, with isolation levels appropriate to each workload:</p>
+
+  <div class="code-block">
+    <div class="code-label">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">JavaScript — Separate read/write connection pools</span>
+    </div>
+    <pre><code class="language-javascript">// Read pool — no record locks acquired
+const readPool = createPool({
+    url: 'jdbc:as400://ibmi.company.com',
+    drivername: 'com.ibm.as400.access.AS400JDBCDriver',
+    properties: {
+        'transaction isolation': 'read uncommitted',
+        'libraries': 'PRODLIB'
+    }
+});
+
+// Write pool — standard record locking
+const writePool = createPool({
+    url: 'jdbc:as400://ibmi.company.com',
+    drivername: 'com.ibm.as400.access.AS400JDBCDriver',
+    properties: {
+        'transaction isolation': 'read committed',
+        'libraries': 'PRODLIB'
+    }
+});</code></pre>
+  </div>
+
+  <p>For frequently accessed, slowly changing data, add a caching layer to avoid hitting the database at all:</p>
+
+  <div class="code-block">
+    <div class="code-label">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">JavaScript — Redis caching layer</span>
+    </div>
+    <pre><code class="language-javascript">app.get('/inventory/:itemId', async (req, res) => {
+    // Check cache first — no database hit at all
+    const cached = await cache.get(`inventory:${req.params.itemId}`);
+    if (cached) return res.json(JSON.parse(cached));
+
+    // Cache miss — query database
+    const data = await getInventoryFromDB(req.params.itemId);
+
+    // Store for 60 seconds
+    await cache.setex(`inventory:${req.params.itemId}`, 60, JSON.stringify(data));
+
+    res.json(data);
+});</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 5 -->
+<div class="section">
+  <h2><span class="emoji">☁️</span> Challenge 2: Cloud Integration Latency</h2>
+
+  <p>When your application moves to the cloud, the distance between your app server and IBM i grows significantly.</p>
+
+  <table class="metrics">
+    <thead>
+      <tr><th>Deployment</th><th>Latency to IBM i</th><th>Lock Duration Impact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>On-premise</td><td class="metric-good">5ms</td><td>Minimal</td></tr>
+      <tr><td>Cloud (same region)</td><td>50ms</td><td>Moderate</td></tr>
+      <tr><td>Cloud (different region)</td><td class="metric-bad">200ms</td><td>Severe at scale</td></tr>
+    </tbody>
+  </table>
+
+  <h3>✅ The Solution: Event-Driven Architecture</h3>
+  <p>For write operations, replace synchronous calls with a queue-based approach. The API publishes an event and returns immediately. A separate worker handles all IBM i database work independently.</p>
+
+  <div class="code-block">
+    <div class="code-label bad">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">❌ Synchronous — lock held for full cloud round trip</span>
+    </div>
+    <pre><code class="language-javascript">app.post('/orders', async (req, res) => {
+    const connection = await ibmiJdbcPool.getConnection();
+    await connection.query('INSERT INTO ORDERS ...');
+    await connection.query('UPDATE INVENTORY ...');
+    await connection.commit(); // Lock held for 200ms
+    res.json({ success: true });
+});</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">✅ Event-driven — no lock held during API response</span>
+    </div>
+    <pre><code class="language-javascript">// API returns immediately — no lock held
+app.post('/orders', async (req, res) => {
+    await messageQueue.publish('order.created', req.body);
+    res.json({ orderId: generateId(), status: 'processing' });
+});
+
+// Worker handles IBM i writes independently
+messageQueue.subscribe('order.created', async (order) => {
+    const connection = await ibmiJdbcPool.getConnection();
+    try {
+        await connection.query('INSERT INTO ORDERS ...');
+        await connection.query('UPDATE INVENTORY ...');
+        await connection.commit(); // Lock held only during actual DB work
+    } finally {
+        connection.release();
+    }
+});</code></pre>
+  </div>
+
+  <div class="outcome">
+    <strong>Benefits:</strong>
+    <ul class="arrow-list" style="margin-top:8px;">
+      <li>User gets a fast response (20ms vs 200ms)</li>
+      <li>IBM i lock held only during actual database work</li>
+      <li>System is more resilient — queue buffers work during spikes</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 6 -->
+<div class="section">
+  <h2><span class="emoji">🤖</span> Challenge 3: AI and Analytics Lock Contention</h2>
+
+  <p>AI training jobs and analytical queries often scan millions of rows. On IBM i, those scans hold shared locks — and while those locks are held, OLTP updates have to wait. A single long-running query can disrupt production operations for minutes.</p>
+
+  <div class="code-block">
+    <div class="code-label bad">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">❌ Problematic — scans millions of rows, holds shared locks for minutes</span>
+    </div>
+    <pre><code class="language-sql">SELECT
+    o.order_date,
+    o.order_amount,
+    c.customer_segment,
+    p.product_category
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+JOIN products p ON o.product_id = p.product_id
+WHERE o.order_date >= CURRENT_DATE - 2 YEARS;</code></pre>
+  </div>
+
+  <h3>✅ Solution 1: Use READ UNCOMMITTED for Analytics</h3>
+  <p>For queries that do not require perfect precision, READ UNCOMMITTED eliminates shared locks entirely. The query reads what is on disk without waiting for or acquiring locks — with zero impact on concurrent OLTP operations.</p>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">✅ SQL — READ UNCOMMITTED eliminates lock contention</span>
+    </div>
+    <pre><code class="language-sql">SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
+SELECT
+    order_date,
+    SUM(order_amount) AS total_sales
+FROM orders
+WHERE order_date >= CURRENT_DATE - 90 DAYS
+GROUP BY order_date;
+
+-- No record locks acquired. No impact on OLTP.</code></pre>
+  </div>
+
+  <h3>✅ Solution 2: Replicate Data for Analytics</h3>
+  <p>For workloads that need accurate data, replicate your production tables to a separate analytical library using IBM i journaling. AI and analytics queries run against the replica — production is completely untouched.</p>
+
+  <div class="code-block">
+    <div class="code-label good">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">✅ SQL — Journaling and analytical replica setup</span>
+    </div>
+    <pre><code class="language-sql">-- Set up journaling on production table
+STRJRNPF FILE(PRODUCTION/ORDERS) JRN(PRODUCTION/ORDJRN);
+
+-- All AI and analytics queries run against the replica
+-- Production locks are never affected
+SELECT * FROM ANALYTICS.ORDERS WHERE ...;</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 7 -->
+<div class="section">
+  <h2><span class="emoji">🗺️</span> Implementation Roadmap</h2>
+
+  <div class="phases">
+    <div class="phase">
+      <div class="phase-label">Phase 1 · Weeks 1–2</div>
+      <div class="phase-title">Assessment</div>
+      <p>Identify lock hotspots using QSYS2.OBJECT_LOCK_INFO. Document every integration point: APIs, cloud connections, analytics queries, and microservice dependencies.</p>
+    </div>
+    <div class="phase">
+      <div class="phase-label">Phase 2 · Weeks 3–4</div>
+      <div class="phase-title">Quick Wins</div>
+      <p>Add caching to frequently accessed APIs. Apply READ UNCOMMITTED to analytical queries. Tighten connection pooling. Add circuit breakers to external service calls.</p>
+    </div>
+    <div class="phase">
+      <div class="phase-label">Phase 3 · Months 2–3</div>
+      <div class="phase-title">Architectural Changes</div>
+      <p>Introduce service programs or stored procedures as your API service layer. Migrate high-latency write paths to event-driven patterns. Set up replicated libraries for analytical workloads.</p>
+    </div>
+    <div class="phase">
+      <div class="phase-label">Phase 4 · Ongoing</div>
+      <div class="phase-title">Continuous Optimization</div>
+      <p>Schedule regular lock contention reviews. Add performance testing to your integration pipeline. Keep your team trained on modern IBM i patterns as your architecture evolves.</p>
+    </div>
+  </div>
+
+  <h3>Identifying Lock Hotspots</h3>
+
+  <div class="code-block">
+    <div class="code-label">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">SQL — Lock hotspot identification query</span>
+    </div>
+    <pre><code class="language-sql">SELECT
+    OBJECT_NAME,
+    OBJECT_LIBRARY,
+    COUNT(*) AS lock_count,
+    AVG(LOCK_DURATION) AS avg_duration_ms,
+    MAX(LOCK_DURATION) AS max_duration_ms
+FROM QSYS2.OBJECT_LOCK_INFO
+WHERE LOCK_STATE = 'HELD'
+GROUP BY OBJECT_NAME, OBJECT_LIBRARY
+ORDER BY lock_count DESC;</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 8 -->
+<div class="section">
+  <h2><span class="emoji">📊</span> Measuring Success</h2>
+
+  <p>Track these metrics before and after each change. The numbers below represent what a well-executed modernization effort typically achieves.</p>
+
+  <table class="metrics">
+    <thead>
+      <tr><th>Metric</th><th>Before</th><th>After</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Lock contention rate</td><td class="metric-bad">30%</td><td class="metric-good">&lt;5%</td></tr>
+      <tr><td>Average API response time</td><td class="metric-bad">250ms</td><td class="metric-good">100ms</td></tr>
+      <tr><td>Timeout rate</td><td class="metric-bad">5%</td><td class="metric-good">&lt;1%</td></tr>
+      <tr><td>Concurrent capacity</td><td class="metric-bad">500 req/s</td><td class="metric-good">2,000 req/s</td></tr>
+    </tbody>
+  </table>
+
+  <div class="code-block">
+    <div class="code-label">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span class="label-text">SQL — Daily lock contention monitoring report</span>
+    </div>
+    <pre><code class="language-sql">SELECT
+    DATE(CURRENT_TIMESTAMP) AS report_date,
+    COUNT(*) AS total_locks,
+    SUM(CASE WHEN LOCK_STATE = 'WAIT' THEN 1 ELSE 0 END) AS waiting_locks,
+    AVG(CASE WHEN LOCK_STATE = 'HELD'
+        THEN TIMESTAMPDIFF(2, CHAR(CURRENT_TIMESTAMP - LOCK_REQUEST_TIME))
+        ELSE 0 END) AS avg_hold_time_seconds
+FROM QSYS2.OBJECT_LOCK_INFO
+GROUP BY DATE(CURRENT_TIMESTAMP);</code></pre>
+  </div>
+</div>
+
+<!-- CONCLUSION -->
+<div class="conclusion-box">
+  <h2><span class="emoji">💡</span> Conclusion</h2>
+  <p>Modernizing IBM i does not mean working around its locking mechanisms. It means designing your architecture to work with them.</p>
+  <br>
+  <p>The principles are consistent across every pattern in this article:</p>
+  <ul class="arrow-list" style="margin-top: 12px;">
+    <li>Keep lock duration short — get in, get data, commit, get out</li>
+    <li>Separate OLTP and analytical workloads</li>
+    <li>Use async processing for cloud-connected writes</li>
+    <li>Introduce a service layer to keep transaction boundaries under control</li>
+  </ul>
+  <br>
+  <p>IBM i's strengths — reliability, security, and data integrity — remain fully intact. What changes is how you connect the rest of your architecture to take advantage of them.</p>
+</div>
+
+<div class="article-footer">
+  <span>Last Updated: March 2026 · Version 2.0</span>
+  <span>Feel free to share with attribution.</span>
+</div>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>

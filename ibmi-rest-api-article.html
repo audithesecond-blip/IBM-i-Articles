@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REST API Integration for IBM i: A Practical Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --ibm-blue: #0f62fe; --ibm-blue-dark: #0043ce;
+    --ibm-cool-gray-10: #f2f4f8; --ibm-cool-gray-20: #dde1e6;
+    --ibm-cool-gray-60: #697077; --ibm-cool-gray-90: #21272a;
+    --ibm-cool-gray-100: #121619; --ibm-red: #da1e28;
+    --ibm-green: #24a148; --ibm-teal: #009d9a;
+    --text-primary: #161616; --text-secondary: #525252;
+    --bg: #ffffff; --bg-subtle: #f4f4f4;
+    --border: #e0e0e0; --accent-bar: 4px solid var(--ibm-blue);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; font-size: 17px; line-height: 1.75; color: var(--text-primary); background: var(--bg); max-width: 820px; margin: 0 auto; padding: 60px 40px 100px; }
+  .article-header { border-left: var(--accent-bar); padding-left: 24px; margin-bottom: 56px; }
+  .article-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ibm-blue); margin-bottom: 12px; }
+  h1 { font-family: 'IBM Plex Serif', serif; font-size: 2.4rem; font-weight: 600; line-height: 1.2; color: var(--ibm-cool-gray-100); margin-bottom: 20px; }
+  .article-meta { font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; gap: 20px; flex-wrap: wrap; }
+  .article-meta span::before { content: '· '; }
+  .article-meta span:first-child::before { content: ''; }
+  .lead { font-size: 1.15rem; line-height: 1.8; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 48px; }
+  .section { margin-bottom: 52px; }
+  h2 { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.35rem; font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  h2 .emoji { font-size: 1.2rem; flex-shrink: 0; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--ibm-cool-gray-90); margin: 28px 0 10px; }
+  p { margin-bottom: 16px; color: var(--text-primary); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+  .callout { background: var(--ibm-cool-gray-10); border-left: 4px solid var(--ibm-blue); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; color: var(--ibm-cool-gray-90); }
+  .callout strong { color: var(--ibm-blue-dark); }
+  .outcome { background: #defbe6; border-left: 4px solid var(--ibm-green); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .outcome strong { color: #044317; }
+  .warning { background: #fff1f1; border-left: 4px solid var(--ibm-red); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .warning strong { color: #750e13; }
+  .arrow-list { list-style: none; margin: 12px 0 20px; padding: 0; }
+  .arrow-list li { padding: 5px 0 5px 22px; position: relative; color: var(--text-primary); }
+  .arrow-list li::before { content: '→'; position: absolute; left: 0; color: var(--ibm-blue); font-weight: 600; }
+  .numbered-list { list-style: none; margin: 12px 0 20px; padding: 0; counter-reset: item; }
+  .numbered-list li { padding: 8px 0 8px 36px; position: relative; counter-increment: item; border-bottom: 1px solid var(--ibm-cool-gray-20); }
+  .numbered-list li:last-child { border-bottom: none; }
+  .numbered-list li::before { content: counter(item); position: absolute; left: 0; top: 8px; background: var(--ibm-blue); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .code-block { margin: 24px 0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+  .code-label { background: #1a1d23; color: #6b7280; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; padding: 8px 16px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2d3139; }
+  .code-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; } .dot-yellow { background: #ffbd2e; } .dot-green { background: #28c840; }
+  .code-block pre { margin: 0 !important; border-radius: 0 !important; }
+  .code-block pre code { font-family: 'IBM Plex Mono', monospace !important; font-size: 13.5px !important; line-height: 1.65 !important; padding: 20px !important; }
+  .code-label.bad { background: #2a1215; } .code-label.bad .label-text { color: #ff8080; }
+  .code-label.good { background: #0d2117; } .code-label.good .label-text { color: #6ee7a0; }
+  .metrics { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.92rem; }
+  .metrics th { background: var(--ibm-cool-gray-90); color: white; padding: 10px 16px; text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .metrics td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  .metrics tr:nth-child(even) td { background: var(--bg-subtle); }
+  .metric-good { color: var(--ibm-green); font-weight: 600; }
+  .metric-bad { color: var(--ibm-red); font-weight: 600; }
+  .metric-mid { color: #8a3800; font-weight: 600; }
+  .arch-diagram { background: var(--ibm-cool-gray-10); border: 1px solid var(--border); border-radius: 6px; padding: 28px; margin: 20px 0; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+  .arch-box { display: inline-block; background: white; border: 2px solid var(--ibm-blue); border-radius: 4px; padding: 8px 24px; font-weight: 500; color: var(--ibm-cool-gray-100); margin: 4px 0; }
+  .arch-arrow { display: block; color: var(--ibm-blue); font-size: 20px; line-height: 1.4; }
+  .phases { display: grid; gap: 16px; margin: 20px 0; }
+  .phase { background: var(--bg-subtle); border-radius: 6px; padding: 18px 20px; border-left: 4px solid var(--ibm-teal); }
+  .phase-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ibm-teal); margin-bottom: 4px; }
+  .phase-title { font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 6px; }
+  .phase p { font-size: 0.92rem; color: var(--text-secondary); margin: 0; }
+  .conclusion-box { background: var(--ibm-cool-gray-100); color: white; border-radius: 8px; padding: 36px 40px; margin-top: 48px; }
+  .conclusion-box h2 { color: white; margin-bottom: 16px; }
+  .conclusion-box p { color: #c6c6c6; }
+  .conclusion-box .arrow-list li { color: #e0e0e0; }
+  .conclusion-box .arrow-list li::before { color: #78a9ff; }
+  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header class="article-header">
+  <div class="article-label">IBM i Architecture · REST API Integration</div>
+  <h1>REST API Integration for IBM i: A Practical Guide</h1>
+  <div class="article-meta">
+    <span>Last Updated: March 2026</span>
+    <span>Version 2.0</span>
+    <span>IBM i Reference Pages Blog</span>
+  </div>
+</header>
+
+<p class="lead">
+  "We need to expose our RPG programs as REST APIs." If you work with IBM i systems, you have heard this request. Your business needs to integrate with modern applications, mobile apps, and cloud services — but your core business logic lives in RPG, COBOL, and CL programs that have run reliably for decades.<br><br>
+  The good news? You do not need to rewrite everything. This article explores three practical approaches to REST API integration on IBM i, with real-world implementation details and lessons learned from actual modernization projects.
+</p>
+
+<div class="section">
+  <h2><span class="emoji">🔍</span> Why REST APIs Matter for IBM i</h2>
+  <p>Modern applications expect REST APIs. Mobile apps require JSON responses. Cloud services communicate through HTTP endpoints. Partner integrations expect standard protocols. Microservices architectures rely on API communication.</p>
+  <p>Your IBM i system already contains the most valuable asset in your organization — validated business logic that has evolved over years or decades. REST APIs make that logic accessible to the modern technology ecosystem without requiring a rewrite.</p>
+  <p>Traditional integration methods each carry significant limitations. Data queues are fast and reliable but IBM i-specific. File transfers are batch-oriented and unsuitable for real-time use. ODBC and JDBC provide database access but bypass business logic. Screen scraping is fragile and difficult to maintain.</p>
+  <div class="callout"><strong>📌 Key principle:</strong> Your IBM i platform already powers the core of your business. REST APIs simply make that power available to modern systems — without touching the logic that makes it work.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">⚖️</span> Three Approaches at a Glance</h2>
+  <table class="metrics">
+    <thead><tr><th>Approach</th><th>Complexity</th><th>Performance</th><th>Best Use Case</th></tr></thead>
+    <tbody>
+      <tr><td>Integrated Web Services (IWS)</td><td class="metric-good">Low</td><td class="metric-good">High</td><td>Simple services, IBM-standardized environments</td></tr>
+      <tr><td>Node.js API Layer</td><td class="metric-mid">Medium</td><td class="metric-mid">Medium</td><td>Modern integration layers, microservices</td></tr>
+      <tr><td>Pure RPG CGI</td><td class="metric-bad">High</td><td class="metric-good">Very High</td><td>Lightweight or performance-critical workloads</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">1️⃣</span> Approach 1: Integrated Web Services (IWS)</h2>
+  <p>IBM's built-in web services framework is included with IBM i. It allows ILE programs to be exposed as REST or SOAP services without any additional runtime or infrastructure.</p>
+  <p>The workflow is straightforward: create an RPG service program, export procedures, deploy through the IWS server, and access through HTTP endpoints.</p>
+
+  <h3>Example: Customer Lookup Service</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — IWS Customer Lookup Service Program</span></div>
+    <pre><code class="language-javascript">**FREE
+Ctl-Opt NoMain;
+
+Dcl-Proc getCustomer Export;
+  Dcl-Pi *N Varchar(2000);
+    customerId Char(10) Const;
+  End-Pi;
+
+  Dcl-S jsonResponse Varchar(2000);
+
+  // Use JSON_OBJECT for clean, structured output
+  Exec SQL
+    SELECT JSON_OBJECT(
+        'customerId' VALUE CUSTNO,
+        'name'       VALUE CUSTNAME,
+        'address'    VALUE CUSTADDR,
+        'city'       VALUE CUSTCITY,
+        'zip'        VALUE CUSTZIP
+    )
+    INTO :jsonResponse
+    FROM CUSTMAST
+    WHERE CUSTNO = :customerId;
+
+  If SQLCODE &lt;&gt; 0;
+    jsonResponse = '{"error":"Customer not found"}';
+  EndIf;
+
+  Return jsonResponse;
+End-Proc;</code></pre>
+  </div>
+
+  <div class="outcome">
+    <strong>Best for:</strong> Organizations already standardized on IBM tooling that need simple, stable service exposure with no additional runtime to manage.
+  </div>
+
+  <div class="warning">
+    <strong>Limitations:</strong> Originally SOAP-oriented. REST support is functional but less flexible than modern frameworks. Limited API management capabilities.
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">2️⃣</span> Approach 2: Node.js on IBM i</h2>
+  <p>Node.js runs directly on IBM i and can call RPG programs using XMLSERVICE via <code>itoolkit</code>. This creates a modern API layer while leaving all business logic in RPG — exactly where it belongs.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-box">Client Application</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">Node.js REST API</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">XMLSERVICE / iToolkit</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">RPG Programs</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">DB2 for i</div>
+  </div>
+
+  <h3>Example: Node.js API Layer</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Node.js calling RPG via iToolkit</span></div>
+    <pre><code class="language-javascript">const express = require('express');
+const { Connection, ProgramCall } = require('itoolkit');
+
+const app = express();
+const conn = new Connection({
+    transport: 'idb',
+    transportOptions: { database: '*LOCAL' }
+});
+
+app.get('/api/customer/:id', async (req, res) => {
+    try {
+        const customerId = req.params.id;
+
+        // Call RPG program directly
+        const pgm = new ProgramCall('CUSTINQ', { lib: 'MYLIB' });
+        pgm.addParam({ type: 'CHAR', length: 10, value: customerId });
+        pgm.addParam({ type: 'CHAR', length: 2000, io: 'out' });
+
+        conn.add(pgm);
+        const results = await conn.run();
+
+        res.json(JSON.parse(results[0].data));
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.listen(3000);</code></pre>
+  </div>
+
+  <h3>Example: The Corresponding RPG Program</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — CUSTINQ called by Node.js</span></div>
+    <pre><code class="language-javascript">**FREE
+
+Dcl-Pi *N;
+  customerId Char(10) Const;
+  jsonResponse Char(2000);
+End-Pi;
+
+Exec SQL
+  SELECT JSON_OBJECT(
+      'customerId' VALUE CUSTNO,
+      'name'       VALUE CUSTNAME,
+      'address'    VALUE CUSTADDR,
+      'city'       VALUE CUSTCITY,
+      'zip'        VALUE CUSTZIP
+  )
+  INTO :jsonResponse
+  FROM CUSTMAST
+  WHERE CUSTNO = :customerId;
+
+If SQLCODE &lt;&gt; 0;
+  jsonResponse = '{"error":"Customer not found"}';
+EndIf;
+
+*InLR = *On;</code></pre>
+  </div>
+
+  <div class="outcome">
+    <strong>Best for:</strong> Organizations adopting modern integration architectures, API platforms, or microservices strategies. Provides the best balance of flexibility, ecosystem, and maintainability for most modernization projects.
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">3️⃣</span> Approach 3: Pure RPG REST APIs (CGI)</h2>
+  <p>Some organizations prefer implementing APIs entirely in RPG. Apache on IBM i supports CGI programs that can generate HTTP responses directly — no additional runtime required.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-box">Client Application</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">IBM HTTP Server (Apache)</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">RPG CGI Program</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">DB2 for i</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — REST Endpoint via CGI</span></div>
+    <pre><code class="language-javascript">**FREE
+Ctl-Opt DftActGrp(*No);
+
+Dcl-S requestMethod Varchar(10);
+Dcl-S pathInfo Varchar(256);
+Dcl-S customerId Char(10);
+Dcl-S jsonResponse Varchar(5000);
+
+// Get HTTP request details from environment
+requestMethod = %Str(getenv('REQUEST_METHOD'));
+pathInfo = %Str(getenv('PATH_INFO'));
+
+// Parse customer ID from URL path
+customerId = %Subst(pathInfo: 15: 10);
+
+// Query and build JSON response
+Exec SQL
+  SELECT JSON_OBJECT(
+      'customerId' VALUE CUSTNO,
+      'name'       VALUE CUSTNAME,
+      'address'    VALUE CUSTADDR,
+      'city'       VALUE CUSTCITY,
+      'zip'        VALUE CUSTZIP
+  )
+  INTO :jsonResponse
+  FROM CUSTMAST
+  WHERE CUSTNO = :customerId;
+
+If SQLCODE &lt;&gt; 0;
+  jsonResponse = '{"error":"Customer not found"}';
+EndIf;
+
+// Write HTTP response
+callp printf('Content-Type: application/json' + x'0a0a');
+callp printf(%Trim(jsonResponse));
+
+*InLR = *On;</code></pre>
+  </div>
+
+  <div class="outcome">
+    <strong>Best for:</strong> Simple APIs or environments that want to remain pure IBM i with no additional runtimes. Uses existing RPG skillsets and gives full control over implementation.
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🛡️</span> Architectural Best Practice: The Service Layer</h2>
+  <p>Regardless of which approach you choose, one architectural principle applies to all three: APIs should never directly manipulate database tables. They should always call service programs or stored procedures.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-box">API Layer (any approach)</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">Service Programs / SQL Procedures</div>
+    <span class="arch-arrow">↓</span>
+    <div class="arch-box">DB2 for i Tables</div>
+  </div>
+
+  <p>This pattern provides centralized transaction control, consistent locking behavior, easier security management, and a single point to optimize, monitor, and audit. It also makes future refactoring significantly simpler.</p>
+
+  <h3>Example: Order Entry with Full Transaction Control</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — Service Program with Transaction Management</span></div>
+    <pre><code class="language-javascript">**FREE
+
+Dcl-Proc createOrder Export;
+  Dcl-Pi *N Varchar(2000);
+    orderJson Varchar(5000) Const;
+  End-Pi;
+
+  Dcl-S orderId Char(15);
+  Dcl-S customerId Char(10);
+  Dcl-S resultJson Varchar(2000);
+  Dcl-S customerCount Int(10);
+
+  Exec SQL SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  Exec SQL START TRANSACTION;
+
+  // Parse customer ID from input JSON
+  customerId = %Subst(orderJson: %Scan('"customerId":"': orderJson) + 14: 10);
+
+  // Validate customer exists
+  Exec SQL
+    SELECT COUNT(*) INTO :customerCount
+    FROM CUSTMAST
+    WHERE CUSTNO = :customerId;
+
+  If SQLCODE &lt;&gt; 0 Or customerCount = 0;
+    Exec SQL ROLLBACK;
+    Return '{"error":"Customer not found"}';
+  EndIf;
+
+  // Generate order and insert header
+  orderId = generateOrderId();
+
+  Exec SQL
+    INSERT INTO ORDHDR (ORDNO, CUSTNO, ORDDATE, ORDSTATUS)
+    VALUES (:orderId, :customerId, CURRENT DATE, 'PENDING');
+
+  If SQLCODE &lt;&gt; 0;
+    Exec SQL ROLLBACK;
+    Return '{"error":"Failed to create order"}';
+  EndIf;
+
+  Exec SQL COMMIT;
+
+  // Return result
+  Exec SQL
+    SELECT JSON_OBJECT('orderId' VALUE :orderId, 'status' VALUE 'confirmed')
+    INTO :resultJson
+    FROM SYSIBM.SYSDUMMY1;
+
+  Return resultJson;
+End-Proc;</code></pre>
+  </div>
+
+  <div class="callout"><strong>📌 Key principle:</strong> All business logic, validation, and transaction management stays in RPG. The API layer only routes requests and formats responses.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🔐</span> Security Essentials</h2>
+  <p>Two authentication approaches work well for IBM i APIs. JWT tokens are recommended for external-facing APIs; IBM i User Profile validation works well for internal APIs.</p>
+
+  <h3>JWT Token Authentication</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — JWT Login and Route Protection</span></div>
+    <pre><code class="language-javascript">const jwt = require('jsonwebtoken');
+
+// Login endpoint — generates token
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await validateIBMiUser(username, password);
+
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign(
+        { username: user.username, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
+    res.json({ token });
+});
+
+// Middleware — validates token on protected routes
+const authenticateJWT = (req, res, next) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: 'Access denied' });
+
+    try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
+        next();
+    } catch {
+        res.status(400).json({ error: 'Invalid token' });
+    }
+};
+
+app.use('/api/protected', authenticateJWT);</code></pre>
+  </div>
+
+  <div class="callout"><strong>Always use HTTPS in production.</strong> Every API endpoint must run over TLS. Never transmit credentials or tokens over unencrypted connections.</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">⚡</span> Performance Optimization</h2>
+
+  <h3>Connection Pooling</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — iToolkit Connection Pool</span></div>
+    <pre><code class="language-javascript">const { ConnectionPool } = require('itoolkit');
+
+const pool = new ConnectionPool({
+    transport: 'idb',
+    transportOptions: { database: '*LOCAL' },
+    poolSize: 10
+});
+
+app.get('/api/customer/:id', async (req, res) => {
+    const conn = await pool.acquire();
+    try {
+        const results = await conn.run();
+        res.json(results);
+    } finally {
+        pool.release(conn); // Always release back to pool
+    }
+});</code></pre>
+  </div>
+
+  <h3>Redis Caching</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Redis Cache Layer</span></div>
+    <pre><code class="language-javascript">app.get('/api/customer/:id', async (req, res) => {
+    const cacheKey = `customer:${req.params.id}`;
+
+    // Check cache first — no IBM i hit at all
+    const cached = await client.get(cacheKey);
+    if (cached) return res.json(JSON.parse(cached));
+
+    // Cache miss — fetch from IBM i
+    const customer = await getCustomerFromIBMi(req.params.id);
+
+    // Store for 5 minutes
+    await client.setEx(cacheKey, 300, JSON.stringify(customer));
+
+    res.json(customer);
+});</code></pre>
+  </div>
+
+  <h3>Async Processing for Long-Running Jobs</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Submit and Poll Pattern</span></div>
+    <pre><code class="language-javascript">// Submit batch job — return immediately
+app.post('/api/reports/generate', async (req, res) => {
+    const reportId = generateReportId();
+    await submitJob(`CALL PGM(GENRPT) PARM('${reportId}')`);
+
+    res.status(202).json({
+        reportId,
+        status: 'processing',
+        statusUrl: `/api/reports/${reportId}/status`
+    });
+});</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <h2><span class="emoji">🚨</span> Common Pitfalls to Avoid</h2>
+
+  <h3>1 — Character Encoding</h3>
+  <p>Always handle CCSID conversion when moving data between IBM i (EBCDIC) and JSON (UTF-8). Failure to do so produces garbled output that is difficult to debug.</p>
+
+  <h3>2 — Large Result Sets</h3>
+  <p>Always paginate API responses. Never return unbounded result sets — they will eventually break under production load.</p>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">JavaScript — Pagination Pattern</span></div>
+    <pre><code class="language-javascript">app.get('/api/customers', async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+
+    const customers = await getCustomers(limit, offset);
+
+    res.json({
+        page, limit,
+        data: customers,
+        nextPage: `/api/customers?page=${page + 1}&limit=${limit}`
+    });
+});</code></pre>
+  </div>
+
+  <h3>3 — Exposing Internal Errors</h3>
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Never expose internal error details to API consumers</span></div>
+    <pre><code class="language-javascript">// BAD — exposes internal stack trace
+app.use((err, req, res, next) => {
+    res.status(500).json({ error: err.message, stack: err.stack });
+});</code></pre>
+  </div>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Log internally, return generic error externally</span></div>
+    <pre><code class="language-javascript">// GOOD — log full error, return safe response
+app.use((err, req, res, next) => {
+    console.error('API Error:', err); // Full detail in logs only
+    res.status(500).json({ error: 'Internal server error', requestId: req.id });
+});</code></pre>
+  </div>
+</div>
+
+<div class="conclusion-box">
+  <h2><span class="emoji">💡</span> Conclusion</h2>
+  <p>REST API integration on IBM i does not require rewriting decades of business logic. You have three viable paths — and for most modernization projects, the Node.js approach provides the best balance of flexibility, ecosystem support, and long-term maintainability.</p>
+  <br>
+  <p>Whichever approach you choose, keep these principles consistent:</p>
+  <ul class="arrow-list" style="margin-top: 12px;">
+    <li>Wrap — do not rewrite — existing RPG logic</li>
+    <li>Always implement a service layer between APIs and tables</li>
+    <li>Secure every endpoint with proper authentication</li>
+    <li>Use connection pooling and caching to protect IBM i from load</li>
+    <li>Paginate responses and handle errors gracefully</li>
+  </ul>
+  <br>
+  <p>Your IBM i platform already powers the core of your business. REST APIs simply make that power available to modern systems.</p>
+</div>
+
+<div class="article-footer">
+  <span>Last Updated: March 2026 · Version 2.0</span>
+  <span>Feel free to share with attribution.</span>
+</div>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>
