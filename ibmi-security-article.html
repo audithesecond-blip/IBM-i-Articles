@@ -72,7 +72,29 @@
   .conclusion-box p { color: #c6c6c6; }
   .conclusion-box .arrow-list li { color: #e0e0e0; }
   .conclusion-box .arrow-list li::before { color: #78a9ff; }
-  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .article-footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--ibm-cool-gray-60);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .footer-author {
+    font-size: 14px;
+    color: var(--ibm-cool-gray-90);
+    font-weight: 400;
+  }
+  .footer-author strong {
+    font-weight: 600;
+    color: var(--ibm-cool-gray-100);
+  }
+  .footer-meta {
+    font-size: 12px;
+    color: var(--ibm-cool-gray-60);
+  }
 </style>
 </head>
 <body>
@@ -82,8 +104,8 @@
   <h1>IBM i Security in the API Era: Protecting Your Systems in a Connected World</h1>
   <div class="article-meta">
     <span>Last Updated: March 2026</span>
-    <span>Version 2.0</span>
-    <span>IBM i Reference Pages Blog</span>
+    
+    
   </div>
 </header>
 
@@ -494,8 +516,12 @@ app.post('/api/login', async (req, res) => {
 </div>
 
 <div class="article-footer">
-  <span>Last Updated: March 2026 · Version 2.0</span>
-  <span>Feel free to share with attribution.</span>
+  <div class="footer-author"><strong>Y B Audi</strong> &nbsp;·&nbsp; IBM i SME</div>
+  <div class="footer-meta">
+    <span>Last Updated: March 2026</span>
+    <span>&nbsp;·&nbsp; Version 1</span>
+    <span>&nbsp;·&nbsp; Feel free to share with attribution.</span>
+  </div>
 </div>
 
 <script>hljs.highlightAll();</script>

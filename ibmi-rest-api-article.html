@@ -26,6 +26,8 @@
   .article-meta { font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; gap: 20px; flex-wrap: wrap; }
   .article-meta span::before { content: '· '; }
   .article-meta span:first-child::before { content: ''; }
+  .article-author { margin-top: 14px; font-size: 14px; color: var(--ibm-cool-gray-60); }
+  .article-author strong { color: var(--ibm-cool-gray-90); font-weight: 600; }
   .lead { font-size: 1.15rem; line-height: 1.8; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 48px; }
   .section { margin-bottom: 52px; }
   h2 { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.35rem; font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
@@ -74,7 +76,29 @@
   .conclusion-box p { color: #c6c6c6; }
   .conclusion-box .arrow-list li { color: #e0e0e0; }
   .conclusion-box .arrow-list li::before { color: #78a9ff; }
-  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .article-footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--ibm-cool-gray-60);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .footer-author {
+    font-size: 14px;
+    color: var(--ibm-cool-gray-90);
+    font-weight: 400;
+  }
+  .footer-author strong {
+    font-weight: 600;
+    color: var(--ibm-cool-gray-100);
+  }
+  .footer-meta {
+    font-size: 12px;
+    color: var(--ibm-cool-gray-60);
+  }
 </style>
 </head>
 <body>
@@ -84,8 +108,8 @@
   <h1>REST API Integration for IBM i: A Practical Guide</h1>
   <div class="article-meta">
     <span>Last Updated: March 2026</span>
-    <span>Version 2.0</span>
-    <span>IBM i Reference Pages Blog</span>
+    
+    
   </div>
 </header>
 
@@ -560,8 +584,12 @@ app.use((err, req, res, next) => {
 </div>
 
 <div class="article-footer">
-  <span>Last Updated: March 2026 · Version 2.0</span>
-  <span>Feel free to share with attribution.</span>
+  <div class="footer-author"><strong>Y B Audi</strong> &nbsp;·&nbsp; IBM i SME</div>
+  <div class="footer-meta">
+    <span>Last Updated: March 2026</span>
+    <span>&nbsp;·&nbsp; Version 1</span>
+    <span>&nbsp;·&nbsp; Feel free to share with attribution.</span>
+  </div>
 </div>
 
 <script>hljs.highlightAll();</script>
