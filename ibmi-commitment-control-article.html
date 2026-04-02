@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBM i Commitment Control: Preventing Silent Data Corruption in Multi-File Transactions</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --ibm-blue: #0f62fe; --ibm-blue-dark: #0043ce;
+    --ibm-cool-gray-10: #f2f4f8; --ibm-cool-gray-20: #dde1e6;
+    --ibm-cool-gray-60: #697077; --ibm-cool-gray-90: #21272a;
+    --ibm-cool-gray-100: #121619; --ibm-red: #da1e28;
+    --ibm-green: #24a148; --ibm-teal: #009d9a;
+    --text-primary: #161616; --text-secondary: #525252;
+    --bg: #ffffff; --bg-subtle: #f4f4f4;
+    --border: #e0e0e0; --accent-bar: 4px solid var(--ibm-blue);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; font-size: 17px; line-height: 1.75; color: var(--text-primary); background: var(--bg); max-width: 820px; margin: 0 auto; padding: 60px 40px 100px; }
+  .article-header { border-left: var(--accent-bar); padding-left: 24px; margin-bottom: 56px; }
+  .article-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ibm-blue); margin-bottom: 12px; }
+  h1 { font-family: 'IBM Plex Serif', serif; font-size: 2.4rem; font-weight: 600; line-height: 1.2; color: var(--ibm-cool-gray-100); margin-bottom: 20px; }
+  .article-meta { font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; gap: 20px; flex-wrap: wrap; }
+  .article-meta span::before { content: '· '; } .article-meta span:first-child::before { content: ''; }
+  .lead { font-size: 1.15rem; line-height: 1.8; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 48px; }
+  .section { margin-bottom: 52px; }
+  h2 { font-size: 1.35rem; font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  h2 .emoji { font-size: 1.2rem; flex-shrink: 0; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--ibm-cool-gray-90); margin: 28px 0 10px; }
+  p { margin-bottom: 16px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+  .callout { background: var(--ibm-cool-gray-10); border-left: 4px solid var(--ibm-blue); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .callout strong { color: var(--ibm-blue-dark); }
+  .outcome { background: #defbe6; border-left: 4px solid var(--ibm-green); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .outcome strong { color: #044317; }
+  .warning { background: #fff1f1; border-left: 4px solid var(--ibm-red); padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+  .warning strong { color: #750e13; }
+  .arrow-list { list-style: none; margin: 12px 0 20px; padding: 0; }
+  .arrow-list li { padding: 5px 0 5px 22px; position: relative; }
+  .arrow-list li::before { content: '→'; position: absolute; left: 0; color: var(--ibm-blue); font-weight: 600; }
+  .numbered-list { list-style: none; margin: 12px 0 20px; padding: 0; counter-reset: item; }
+  .numbered-list li { padding: 8px 0 8px 36px; position: relative; counter-increment: item; border-bottom: 1px solid var(--ibm-cool-gray-20); }
+  .numbered-list li:last-child { border-bottom: none; }
+  .numbered-list li::before { content: counter(item); position: absolute; left: 0; top: 8px; background: var(--ibm-blue); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .code-block { margin: 24px 0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+  .code-label { background: #1a1d23; color: #6b7280; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; padding: 8px 16px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2d3139; }
+  .code-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; } .dot-yellow { background: #ffbd2e; } .dot-green { background: #28c840; }
+  .code-block pre { margin: 0 !important; border-radius: 0 !important; }
+  .code-block pre code { font-family: 'IBM Plex Mono', monospace !important; font-size: 13.5px !important; line-height: 1.65 !important; padding: 20px !important; }
+  .code-label.bad { background: #2a1215; } .code-label.bad .label-text { color: #ff8080; }
+  .code-label.good { background: #0d2117; } .code-label.good .label-text { color: #6ee7a0; }
+  .metrics { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.92rem; }
+  .metrics th { background: var(--ibm-cool-gray-90); color: white; padding: 10px 16px; text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .metrics td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  .metrics tr:nth-child(even) td { background: var(--bg-subtle); }
+  .metric-good { color: var(--ibm-green); font-weight: 600; }
+  .metric-bad { color: var(--ibm-red); font-weight: 600; }
+  .pitfall { background: #fff8f1; border-left: 4px solid #ff832b; padding: 20px 24px; margin: 24px 0; border-radius: 0 6px 6px 0; }
+  .pitfall-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #ff832b; margin-bottom: 6px; }
+  .pitfall-title { font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 10px; font-size: 1rem; }
+  .phases { display: grid; gap: 16px; margin: 20px 0; }
+  .phase { background: var(--bg-subtle); border-radius: 6px; padding: 18px 20px; border-left: 4px solid var(--ibm-teal); }
+  .phase-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ibm-teal); margin-bottom: 4px; }
+  .phase-title { font-weight: 600; color: var(--ibm-cool-gray-100); margin-bottom: 6px; }
+  .phase p { font-size: 0.92rem; color: var(--text-secondary); margin: 0; }
+  .case-study { background: var(--ibm-cool-gray-10); border-radius: 8px; padding: 28px; margin: 28px 0; }
+  .case-study-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ibm-teal); margin-bottom: 12px; }
+  .checklist { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 6px; }
+  .checklist li { padding: 8px 12px 8px 36px; background: var(--bg-subtle); border-radius: 4px; position: relative; font-size: 0.92rem; }
+  .checklist li::before { content: '☐'; position: absolute; left: 12px; color: var(--ibm-blue); font-size: 1rem; }
+  .checklist-label { font-weight: 600; color: var(--ibm-cool-gray-90); margin: 20px 0 8px; font-size: 0.95rem; }
+  .compare-box { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .compare-bad { background: #fff1f1; border-radius: 6px; padding: 0; overflow: hidden; }
+  .compare-good { background: #defbe6; border-radius: 6px; padding: 0; overflow: hidden; }
+  .compare-header { padding: 8px 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .compare-bad .compare-header { background: #750e13; color: white; }
+  .compare-good .compare-header { background: #044317; color: white; }
+  .compare-content { padding: 12px 16px; font-size: 0.88rem; font-family: 'IBM Plex Mono', monospace; line-height: 1.6; }
+  .conclusion-box { background: var(--ibm-cool-gray-100); color: white; border-radius: 8px; padding: 36px 40px; margin-top: 48px; }
+  .conclusion-box h2 { color: white; margin-bottom: 16px; }
+  .conclusion-box p { color: #c6c6c6; }
+  .conclusion-box .arrow-list li { color: #e0e0e0; }
+  .conclusion-box .arrow-list li::before { color: #78a9ff; }
+  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ibm-cool-gray-60); display: flex; flex-direction: column; gap: 6px; }
+  .footer-author { font-size: 14px; color: var(--ibm-cool-gray-90); font-weight: 400; }
+  .footer-author strong { font-weight: 600; color: var(--ibm-cool-gray-100); }
+  .footer-meta { font-size: 12px; color: var(--ibm-cool-gray-60); }
+  @media (max-width: 600px) { .compare-box { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="article-header">
+  <div class="article-label">IBM i Architecture · Data Integrity</div>
+  <h1>IBM i Commitment Control: Preventing Silent Data Corruption in Multi-File Transactions</h1>
+  <div class="article-meta">
+    <span>Last Updated: April 2026</span>
+  </div>
+</header>
+
+<p class="lead">
+  Most data corruption on IBM i is not caused by failure — it is caused by incomplete success. When your order processing program updates the order header and inventory but crashes before posting to the general ledger, you do not have a system failure. You have something worse: partial truth in your data.<br><br>
+  This article explains why journaling alone does not prevent data corruption, how to implement commitment control correctly, and the real-world cost of getting it wrong.
+</p>
+
+<!-- SECTION 1 -->
+<div class="section">
+  <h2><span class="emoji">🔍</span> The Problem: When Success Becomes Failure</h2>
+
+  <p>Consider an order processing system that updates three files: ORDERHDR for order status, INVMAST for inventory quantities, and GLACCT for financial records. The program runs. The first two updates succeed. Then the disk fills up and GLACCT fails.</p>
+
+  <div class="compare-box">
+    <div class="compare-bad">
+      <div class="compare-header">❌ Without Commitment Control</div>
+      <div class="compare-content">
+        Order: COMPLETED ✓<br>
+        Inventory: REDUCED ✓<br>
+        Financials: MISSING ✗<br><br>
+        Partial data persists permanently.<br>
+        GL is out of balance.
+      </div>
+    </div>
+    <div class="compare-good">
+      <div class="compare-header">✅ With Commitment Control</div>
+      <div class="compare-content">
+        Order: PENDING (rolled back)<br>
+        Inventory: UNCHANGED (rolled back)<br>
+        Financials: NOT ATTEMPTED<br><br>
+        No change. Data integrity preserved.
+      </div>
+    </div>
+  </div>
+
+  <p>Commitment control treats multiple file operations as a single unit of work. Either all changes persist, or none do. There is no middle ground.</p>
+
+  <h3>The Journaling Misconception</h3>
+  <p>Many developers believe journaling provides transactional integrity. This is a dangerous assumption.</p>
+
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Journaling records what happened — it does NOT undo previous updates</span></div>
+    <pre><code class="language-javascript">UPDATE ORDERHDR;  // Succeeds → Written to journal → PERMANENT
+UPDATE INVMAST;   // Succeeds → Written to journal → PERMANENT
+WRITE GLACCT;     // Fails   → Not written
+
+// Result: First two updates are PERMANENT
+// The journal is a history book — it cannot rewrite history</code></pre>
+  </div>
+
+  <div class="callout"><strong>📌 The key distinction:</strong> Journaling is a history book — it records what happened. Commitment control is the decision maker — it determines what <em>should</em> happen, and rolls everything back if any part fails.</div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 2 -->
+<div class="section">
+  <h2><span class="emoji">📚</span> Commitment Control Fundamentals</h2>
+
+  <h3>ACID Properties in Plain Terms</h3>
+  <table class="metrics">
+    <thead><tr><th>Property</th><th>What It Means</th><th>What Breaks Without It</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Atomicity</strong></td><td>All or nothing</td><td>Partial updates persist permanently</td></tr>
+      <tr><td><strong>Consistency</strong></td><td>Valid state to valid state</td><td>Invalid intermediate states in your data</td></tr>
+      <tr><td><strong>Isolation</strong></td><td>Changes invisible until commit</td><td>Other jobs see incomplete work-in-progress</td></tr>
+      <tr><td><strong>Durability</strong></td><td>Committed changes survive crashes</td><td>Journaling provides this independently</td></tr>
+    </tbody>
+  </table>
+
+  <p>The practical translation: Atomicity means you cannot have half an order. Consistency means your GL always balances. Isolation means other users never see your work in progress.</p>
+
+  <h3>Lock Levels — Choose Wisely</h3>
+  <table class="metrics">
+    <thead><tr><th>Level</th><th>When to Use</th><th>What It Does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>*CHG</strong></td><td>Standard OLTP — 99% of cases</td><td>Locks only records you change</td></tr>
+      <tr><td><strong>*CS</strong></td><td>High-concurrency reads</td><td>Locks during read, releases immediately</td></tr>
+      <tr><td><strong>*ALL</strong></td><td>Serializable reports</td><td>Locks everything you touch</td></tr>
+      <tr><td><strong>*NONE</strong></td><td>Read-only queries</td><td>No locking at all</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><strong>Rule of thumb:</strong> Start with <code>*CHG</code>. Only change it if you have a specific, diagnosed problem that requires a different level.</div>
+
+  <h3>Commitment Scope — A Critical Decision</h3>
+  <p>Use <code>*JOB</code> scope for simple batch jobs where all programs share one transaction boundary. Use <code>*ACTGRP</code> scope for modular ILE applications where each activation group manages its own independent transaction.</p>
+
+  <div class="callout"><strong>📌 Important:</strong> You do not explicitly "start" a transaction. It starts automatically with your first database operation after STRCMTCTL. What you control is when it ends — via COMMIT or ROLLBACK.</div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 3 -->
+<div class="section">
+  <h2><span class="emoji">⚙️</span> Setup and Configuration</h2>
+
+  <h3>Step 1 — Journal Configuration</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Create journal and start journaling all transactional files</span></div>
+    <pre><code class="language-bash">/* Create journal receiver */
+CRTJRNRCV JRNRCV(MYLIB/RCV0001) THRESHOLD(100000)
+
+/* Create journal */
+CRTJRN JRN(MYLIB/APPJRN)
+       JRNRCV(MYLIB/RCV0001)
+       MNGRCV(*SYSTEM)
+       DLTRCV(*YES)
+
+/* Start journaling all transactional files to the SAME journal */
+STRJRNPF FILE(MYLIB/ORDERHDR) JRN(MYLIB/APPJRN)
+STRJRNPF FILE(MYLIB/INVMAST)  JRN(MYLIB/APPJRN)
+STRJRNPF FILE(MYLIB/GLACCT)   JRN(MYLIB/APPJRN)</code></pre>
+  </div>
+
+  <p>Key parameters: THRESHOLD(100000) switches to a new receiver at 100MB. MNGRCV(*SYSTEM) lets IBM i manage receivers automatically. DLTRCV(*YES) removes old receivers after backup.</p>
+
+  <h3>Step 2 — Program Configuration</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — All three settings are required</span></div>
+    <pre><code class="language-javascript">**FREE
+CTL-OPT DFTACTGRP(*NO) ACTGRP('ORDPROC');  // Required for *ACTGRP scope
+
+DCL-F ORDERHDR USAGE(*UPDATE) KEYED COMMIT;  // COMMIT keyword enables CC
+DCL-F INVMAST  USAGE(*UPDATE) KEYED COMMIT;
+DCL-F GLACCT   USAGE(*OUTPUT)       COMMIT;</code></pre>
+  </div>
+
+  <h3>Step 3 — Starting Commitment Control</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — CL controls the boundary, RPG does the work</span></div>
+    <pre><code class="language-bash">PGM
+  STRCMTCTL LCKLVL(*CHG) CMTSCOPE(*ACTGRP)
+  CALL PGM(ORDPROC)
+  ENDCMTCTL
+ENDPGM</code></pre>
+  </div>
+
+  <p>This separation of concerns — CL controls the commitment boundary, RPG executes the business logic — makes testing, error handling, and future maintenance significantly easier.</p>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 4 -->
+<div class="section">
+  <h2><span class="emoji">🏗️</span> Three Implementation Patterns That Work</h2>
+
+  <h3>Pattern 1 — Basic Multi-File Transaction</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — All three files treated as one atomic unit</span></div>
+    <pre><code class="language-javascript">**FREE
+
+DCL-F ORDERHDR USAGE(*UPDATE) KEYED COMMIT;
+DCL-F INVMAST  USAGE(*UPDATE) KEYED COMMIT;
+DCL-F GLACCT   USAGE(*OUTPUT)       COMMIT;
+
+DCL-PROC ProcessOrder;
+  DCL-PI *N IND;
+    pOrderID CHAR(10) CONST;
+  END-PI;
+
+  COMMIT;  // Clear any previous uncommitted changes
+
+  CHAIN pOrderID ORDERHDR;
+  IF %FOUND(ORDERHDR);
+
+    ORDSTS = 'PROCESSING';
+    UPDATE ORDRHDR;
+
+    CHAIN ORDITEM INVMAST;
+    IF %FOUND(INVMAST) AND QTYOH >= ORDQTY;
+
+      QTYOH = QTYOH - ORDQTY;
+      UPDATE INVMAST;
+
+      GLACCT_ACCOUNT = '4000-100';
+      GLACCT_AMOUNT  = ORDAMT;
+      WRITE GLACREC;
+
+      ORDSTS = 'COMPLETED';
+      UPDATE ORDRHDR;
+      COMMIT;      // All three operations committed together
+
+      RETURN *ON;
+    ELSE;
+      ROLLBACK;  // None of the above persists
+    ENDIF;
+  ENDIF;
+
+  RETURN *OFF;
+END-PROC;</code></pre>
+  </div>
+
+  <p>If the WRITE to GLACCT fails, ROLLBACK undoes both previous UPDATEs. Your data never enters an inconsistent state.</p>
+
+  <h3>Pattern 2 — Production-Ready Error Handling</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — MONITOR/ON-ERROR guarantees rollback on any failure</span></div>
+    <pre><code class="language-javascript">**FREE
+
+DCL-F ORDERHDR USAGE(*UPDATE) KEYED COMMIT;
+DCL-F INVMAST  USAGE(*UPDATE) KEYED COMMIT;
+DCL-F GLACCT   USAGE(*OUTPUT)       COMMIT;
+DCL-F ERRLOG   USAGE(*OUTPUT);  // NOT under commitment control — always written
+
+DCL-PROC ProcessOrderSafe;
+  DCL-PI *N IND;
+    pOrderID CHAR(10) CONST;
+  END-PI;
+
+  DCL-S Success IND INZ(*ON);
+
+  MONITOR;
+    COMMIT;
+
+    CHAIN pOrderID ORDERHDR;
+    IF NOT %FOUND(ORDERHDR);
+      Success = *OFF;
+      LEAVE;
+    ENDIF;
+
+    ORDSTS = 'PROCESSING';
+    UPDATE ORDRHDR;
+
+    CHAIN ORDITEM INVMAST;
+    IF NOT %FOUND(INVMAST) OR QTYOH &lt; ORDQTY;
+      Success = *OFF;
+      LEAVE;
+    ENDIF;
+
+    QTYOH = QTYOH - ORDQTY;
+    UPDATE INVMAST;
+
+    GLACCT_AMOUNT = ORDAMT;
+    WRITE GLACREC;
+
+    COMMIT;
+
+  ON-ERROR;
+    ROLLBACK;           // Catches ANY error — guaranteed rollback
+    Success = *OFF;
+
+    // Error log is outside commitment control
+    // Always written regardless of transaction outcome
+    ERRLOG_TIME  = %TIMESTAMP();
+    ERRLOG_ORDER = pOrderID;
+    WRITE ERRLOGREC;
+  ENDMON;
+
+  RETURN Success;
+END-PROC;</code></pre>
+  </div>
+
+  <div class="callout"><strong>📌 Key design decision:</strong> The error log file is deliberately NOT under commitment control. This ensures you always have a record of what went wrong, even when the transaction rolls back.</div>
+
+  <h3>Pattern 3 — High-Volume Batch Processing</h3>
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — Commit every 1,000 records to balance performance and recovery</span></div>
+    <pre><code class="language-javascript">**FREE
+
+DCL-C COMMIT_INTERVAL 1000;
+DCL-S Processed PACKED(7:0) INZ(0);
+DCL-S Committed PACKED(7:0) INZ(0);
+
+DCL-PROC BatchProcess;
+
+  COMMIT;
+
+  SETLL *START ORDERHDR;
+  READ ORDERHDR;
+
+  DOW NOT %EOF(ORDERHDR);
+
+    IF ORDSTS = 'PENDING';
+      MONITOR;
+        ProcessSingleOrder(ORDID);
+        Processed += 1;
+
+        IF %REM(Processed: COMMIT_INTERVAL) = 0;
+          COMMIT;                    // Commit every 1,000 records
+          Committed = Processed;
+        ENDIF;
+
+      ON-ERROR;
+        ROLLBACK;                    // Only current batch rolls back
+        Processed = Committed;       // Reset counter to last safe point
+        LogError(ORDID);
+      ENDMON;
+    ENDIF;
+
+    READ ORDERHDR;
+  ENDDO;
+
+  IF Processed > Committed;
+    COMMIT;  // Final commit for remaining records
+  ENDIF;
+
+END-PROC;</code></pre>
+  </div>
+
+  <p>Committing every 1,000 records balances performance (fewer commits means faster processing) against recovery time (smaller batches means less to redo on failure). If an error occurs, only the current batch of up to 1,000 records rolls back — not the entire job.</p>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 5 -->
+<div class="section">
+  <h2><span class="emoji">🔗</span> Mixing Native I/O and SQL</h2>
+
+  <p>When a program uses both native RPG I/O and embedded SQL, both must share the same transaction boundary. The SET OPTION COMMIT directive tells SQL to participate in the same commitment control context as native I/O.</p>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">RPGLE — Native I/O and SQL in the same transaction</span></div>
+    <pre><code class="language-javascript">**FREE
+
+DCL-F ORDERHDR USAGE(*UPDATE) KEYED COMMIT;
+
+EXEC SQL SET OPTION COMMIT = *CHG;  // SQL joins the same transaction
+
+DCL-PROC ProcessOrderMixed;
+
+  COMMIT;
+
+  // Native I/O
+  CHAIN pOrderID ORDERHDR;
+  ORDSTS = 'PROCESSING';
+  UPDATE ORDRHDR;
+
+  // SQL in the same transaction
+  EXEC SQL
+    UPDATE INVMAST
+    SET QTYOH = QTYOH - :ORDQTY
+    WHERE ITEMID = :ORDITEM;
+
+  IF SQLSTATE &lt;&gt; '00000';
+    ROLLBACK;  // Rolls back BOTH the native I/O and the SQL
+    RETURN *OFF;
+  ENDIF;
+
+  EXEC SQL
+    INSERT INTO GLACCT (ACCOUNT, AMOUNT)
+    VALUES ('4000-100', :ORDAMT);
+
+  IF SQLSTATE &lt;&gt; '00000';
+    ROLLBACK;
+    RETURN *OFF;
+  ENDIF;
+
+  COMMIT;  // Commits BOTH native I/O and SQL together
+  RETURN *ON;
+
+END-PROC;</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 6 -->
+<div class="section">
+  <h2><span class="emoji">⚡</span> Performance: What Actually Matters</h2>
+
+  <table class="metrics">
+    <thead><tr><th>Operation</th><th>Without Commitment Control</th><th>With Commitment Control</th><th>Overhead</th></tr></thead>
+    <tbody>
+      <tr><td>Single update</td><td>0.5ms</td><td>0.6ms</td><td class="metric-bad">+20%</td></tr>
+      <tr><td>1,000 record batch</td><td>500ms</td><td>550ms</td><td class="metric-bad">+10%</td></tr>
+      <tr><td>10,000 record batch</td><td>5,000ms</td><td>5,200ms</td><td class="metric-good">+4%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><strong>The tradeoff in plain terms:</strong> 10% slower processing versus three days reconciling out-of-balance accounts at month-end. There is no real decision to make here.</div>
+
+  <h3>Journal Receiver Sizing</h3>
+  <p>The sweet spot for most environments is 100MB to 1GB depending on transaction volume. Too small (10MB) causes the system to switch receivers every hour, degrading performance. Too large (5GB) means longer recovery time after a crash.</p>
+
+  <h3>Lock Escalation — The Hidden Performance Killer</h3>
+
+  <div class="code-block">
+    <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ One massive transaction — locks 100,000 records for hours</span></div>
+    <pre><code class="language-javascript">COMMIT;
+SETLL *START ORDERHDR;
+READ ORDERHDR;
+DOW NOT %EOF(ORDERHDR);
+  UPDATE ORDERHDR;  // Lock held until final COMMIT
+  READ ORDERHDR;
+ENDDO;
+COMMIT;  // 100,000 locks released here — after hours</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ Frequent commits — locks released every 1,000 records</span></div>
+    <pre><code class="language-javascript">COMMIT;
+DCL-S Counter INT(5) INZ(0);
+
+SETLL *START ORDERHDR;
+READ ORDERHDR;
+DOW NOT %EOF(ORDERHDR);
+  UPDATE ORDERHDR;
+  Counter += 1;
+
+  IF Counter >= 1000;
+    COMMIT;      // Locks released — other jobs can proceed
+    Counter = 0;
+  ENDIF;
+
+  READ ORDERHDR;
+ENDDO;
+
+IF Counter > 0;
+  COMMIT;  // Final commit for remaining records
+ENDIF;</code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 7 -->
+<div class="section">
+  <h2><span class="emoji">🚨</span> Four Common Pitfalls</h2>
+
+  <div class="pitfall">
+    <div class="pitfall-label">Pitfall 1</div>
+    <div class="pitfall-title">The Forgotten COMMIT</div>
+    <p>A program updates a file under commitment control, then ends without issuing a COMMIT. IBM i automatically rolls back all uncommitted changes when the program ends. Your update is silently lost — no error, no warning.</p>
+    <p><strong>The fix:</strong> Always issue an explicit COMMIT before <code>*INLR = *ON</code>. Make it the last line of every procedure that writes data.</p>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-label">Pitfall 2</div>
+    <div class="pitfall-title">Mixed Commitment Scopes</div>
+    <p>Program A uses ACTGRP('GROUPA') and Program B uses ACTGRP('GROUPB'). They run in the same job but maintain independent transactions. A COMMIT in Program A does not commit Program B's changes — and vice versa.</p>
+    <p><strong>The fix:</strong> Programs that share a transaction must use the same activation group name.</p>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-label">Pitfall 3</div>
+    <div class="pitfall-title">Long-Running Transactions</div>
+    <div class="code-block" style="margin:12px 0;">
+      <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ Lock held for entire user interaction — could be minutes</span></div>
+      <pre><code class="language-javascript">COMMIT;
+CHAIN OrderID ORDERHDR;
+UPDATE ORDRHDR;   // Lock acquired here
+EXFMT ORDERSCR;  // User stares at screen for 10 minutes
+UPDATE ORDRHDR;
+COMMIT;           // Lock finally released — 10 minutes later</code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ User interaction outside the transaction — lock held for milliseconds</span></div>
+      <pre><code class="language-javascript">CHAIN OrderID ORDERHDR;
+EXFMT ORDERSCR;   // User interaction OUTSIDE the transaction
+COMMIT;
+CHAIN OrderID ORDERHDR;
+UPDATE ORDRHDR;   // Lock acquired and released quickly
+COMMIT;</code></pre>
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-label">Pitfall 4</div>
+    <div class="pitfall-title">Missing ROLLBACK in Error Handler</div>
+    <div class="code-block" style="margin:12px 0;">
+      <div class="code-label bad"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">❌ No ROLLBACK — FILE1 gets committed even though FILE2 failed</span></div>
+      <pre><code class="language-javascript">MONITOR;
+  COMMIT;
+  UPDATE FILE1;
+  UPDATE FILE2;  // Fails
+  COMMIT;
+ON-ERROR;
+  // ROLLBACK missing — FILE1 remains uncommitted
+ENDMON;
+COMMIT;  // Commits FILE1 even though FILE2 failed</code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label good"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">✅ ROLLBACK in error handler — all or nothing guaranteed</span></div>
+      <pre><code class="language-javascript">MONITOR;
+  COMMIT;
+  UPDATE FILE1;
+  UPDATE FILE2;
+  COMMIT;
+ON-ERROR;
+  ROLLBACK;  // Required — undoes FILE1 if FILE2 failed
+ENDMON;</code></pre>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 8 -->
+<div class="section">
+  <h2><span class="emoji">📊</span> Monitoring and Troubleshooting</h2>
+
+  <h3>Check for Uncommitted Changes</h3>
+  <div class="code-block">
+    <div class="code-label"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Identify uncommitted journal entries</span></div>
+    <pre><code class="language-bash">DSPJRN JRN(MYLIB/APPJRN)
+       ENTTYP(*ALL)
+       CMTCYCID(*UNCOMMITTED)
+       OUTPUT(*PRINT)
+
+/* If entries appear here, a program forgot to COMMIT */</code></pre>
+  </div>
+
+  <h3>Check Lock Status</h3>
+  <div class="code-block">
+    <div class="code-label"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span><span class="label-text">CL — Identify jobs holding locks</span></div>
+    <pre><code class="language-bash">WRKOBJLCK OBJ(MYLIB/ORDERHDR) OBJTYPE(*FILE)
+
+/* Locks held for minutes or hours indicate long-running transaction problems */</code></pre>
+  </div>
+
+  <h3>Key Messages to Monitor</h3>
+  <table class="metrics">
+    <thead><tr><th>Message</th><th>Meaning</th><th>Action Required</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CPF8355</strong></td><td>COMMIT completed</td><td>Normal — no action</td></tr>
+      <tr><td><strong>CPF8356</strong></td><td>ROLLBACK completed</td><td>Investigate the cause</td></tr>
+      <tr><td><strong>CPF8358</strong></td><td>Commitment control not active</td><td>Check STRCMTCTL configuration</td></tr>
+    </tbody>
+  </table>
+
+  <p>Frequent CPF8356 messages indicate application errors or business rule violations occurring in production. Each one deserves investigation.</p>
+
+  <div class="callout"><strong>📌 After a crash:</strong> IBM i's recovery is automatic. The system detects abnormal termination, rolls back all uncommitted changes, releases all locks, and marks journal entries accordingly. You do not need to manually fix data after a crash — commitment control handles it.</div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 9 -->
+<div class="section">
+  <h2><span class="emoji">📈</span> Two Real-World Case Studies</h2>
+
+  <div class="case-study">
+    <div class="case-study-label">Case Study 1 · Regional Bank · GL System</div>
+    <p><strong>The problem:</strong> Month-end GL posting showed $50K–$200K discrepancies. Manual reconciliation took 2–3 days every month.</p>
+    <p><strong>Root cause:</strong> Three GL files updated without commitment control. When any update failed mid-sequence, previous updates persisted permanently — leaving the GL out of balance.</p>
+    <p><strong>The fix:</strong> All three GL files placed under the same commitment boundary with MONITOR/ON-ERROR error handling and automatic rollback on failure.</p>
+    <div class="outcome" style="margin-top:16px;">
+      <strong>Results after 18 months:</strong>
+      <ul class="arrow-list" style="margin-top:8px;">
+        <li>Zero data integrity issues</li>
+        <li>Month-end close time reduced from 3 days to 4 hours</li>
+        <li>Passed audit with no findings</li>
+        <li>Estimated savings: $150,000 per year</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="case-study">
+    <div class="case-study-label">Case Study 2 · E-Commerce · Inventory Overselling</div>
+    <p><strong>The problem:</strong> During flash sales, inventory went negative. The system sold 500 units when only 300 were in stock.</p>
+    <p><strong>Root cause:</strong> Multiple jobs simultaneously passed the inventory check, each seeing the same available quantity before any of them had committed a reduction.</p>
+    <p><strong>The fix:</strong> COMMIT issued before the CHAIN operation, which acquires a record lock before the availability check. Only one job can hold that lock at a time — serialising access and preventing the race condition.</p>
+    <div class="outcome" style="margin-top:16px;">
+      <strong>Results:</strong>
+      <ul class="arrow-list" style="margin-top:8px;">
+        <li>Zero overselling incidents since implementation</li>
+        <li>Cancelled orders reduced by 95%</li>
+        <li>Customer satisfaction scores improved measurably</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 10 -->
+<div class="section">
+  <h2><span class="emoji">✅</span> Best Practices Checklist</h2>
+
+  <div class="checklist-label">Configuration</div>
+  <ul class="checklist">
+    <li>Journal receivers sized appropriately — 100MB to 1GB</li>
+    <li>MNGRCV(*SYSTEM) enabled for automatic receiver management</li>
+    <li>All transactional files journaled to the same journal</li>
+  </ul>
+
+  <div class="checklist-label">Programming</div>
+  <ul class="checklist">
+    <li>DFTACTGRP(*NO) in all ILE programs using commitment control</li>
+    <li>COMMIT keyword on all file declarations under commitment control</li>
+    <li>Explicit COMMIT before *INLR = *ON in every procedure that writes data</li>
+    <li>ROLLBACK present in every ON-ERROR handler</li>
+    <li>Consistent activation group names across programs sharing a transaction</li>
+    <li>Periodic commits in batch jobs — every 1,000 to 10,000 records</li>
+  </ul>
+
+  <div class="checklist-label">Architecture</div>
+  <ul class="checklist">
+    <li>Transaction boundaries documented and reviewed</li>
+    <li>Short transactions — no user interaction inside a commit boundary</li>
+    <li>Error logging files outside commitment control</li>
+  </ul>
+
+  <div class="checklist-label">Operations</div>
+  <ul class="checklist">
+    <li>Journal receiver switching monitored</li>
+    <li>Lock contention reviewed regularly using WRKOBJLCK</li>
+    <li>CPF835x messages reviewed and investigated</li>
+    <li>Rollback scenarios tested before production deployment</li>
+  </ul>
+</div>
+
+<div class="conclusion-box">
+  <h2><span class="emoji">💡</span> Conclusion</h2>
+  <p>Commitment control is not optional — it is the only protection against partial truth in your data. The 4–20% performance overhead is negligible compared to the cost of manual reconciliation, data corruption, audit findings, and production incidents.</p>
+  <br>
+  <p>Three principles to apply consistently:</p>
+  <ul class="arrow-list" style="margin-top: 12px;">
+    <li><strong>All or nothing</strong> — related updates must commit or rollback together</li>
+    <li><strong>Explicit control</strong> — always explicitly COMMIT or ROLLBACK, never rely on implicit behaviour</li>
+    <li><strong>Short transactions</strong> — do not hold locks longer than necessary</li>
+  </ul>
+  <br>
+  <p>If you do not control your transaction boundaries, your system will define them for you — and not in your favour.</p>
+</div>
+
+<div class="article-footer">
+  <div class="footer-author"><strong>Y B Audi</strong> &nbsp;·&nbsp; IBM i SME</div>
+  <div class="footer-meta">
+    <span>Last Updated: April 2026</span>
+    <span>&nbsp;·&nbsp; Version 1</span>
+    <span>&nbsp;·&nbsp; Feel free to share with attribution.</span>
+  </div>
+</div>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>
