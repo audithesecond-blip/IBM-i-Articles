@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From ACS and Aldon to VS Code and GitHub — A Practical Guide for IBM i Teams</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --ibm-blue:#0f62fe;--ibm-blue-dark:#0043ce;
+    --ibm-cool-gray-10:#f2f4f8;--ibm-cool-gray-20:#dde1e6;
+    --ibm-cool-gray-60:#697077;--ibm-cool-gray-90:#21272a;
+    --ibm-cool-gray-100:#121619;--ibm-red:#da1e28;
+    --ibm-green:#24a148;--ibm-teal:#009d9a;--ibm-orange:#ff832b;
+    --text-primary:#161616;--text-secondary:#525252;
+    --bg:#ffffff;--bg-subtle:#f4f4f4;--border:#e0e0e0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'IBM Plex Sans',sans-serif;font-size:17px;line-height:1.75;color:var(--text-primary);background:var(--bg);max-width:860px;margin:0 auto;padding:60px 40px 100px;}
+
+  .book-header{border-bottom:1px solid var(--border);padding-bottom:20px;margin-bottom:48px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ibm-cool-gray-60);}
+  .book-title-small{font-weight:600;color:var(--ibm-cool-gray-90);}
+
+  .chapter-header{border-left:4px solid var(--ibm-blue);padding-left:24px;margin-bottom:56px;}
+  .chapter-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ibm-blue);margin-bottom:8px;}
+  .chapter-number{font-size:13px;color:var(--ibm-cool-gray-60);margin-bottom:12px;}
+  h1{font-family:'IBM Plex Serif',serif;font-size:2.3rem;font-weight:600;line-height:1.2;color:var(--ibm-cool-gray-100);}
+
+  .lead{font-size:1.12rem;line-height:1.8;color:var(--text-secondary);border-bottom:1px solid var(--border);padding-bottom:40px;margin-bottom:48px;}
+
+  .learn-box{background:#edf5ff;border:1px solid #d0e2ff;border-radius:6px;padding:20px 24px;margin-bottom:40px;}
+  .learn-box h4{font-size:.88rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ibm-blue);margin-bottom:12px;}
+  .learn-box ul{list-style:none;padding:0;}
+  .learn-box ul li{padding:4px 0 4px 20px;position:relative;font-size:.95rem;color:var(--ibm-cool-gray-90);}
+  .learn-box ul li::before{content:'✓';position:absolute;left:0;color:var(--ibm-blue);font-weight:700;}
+
+  h2{font-size:1.3rem;font-weight:600;color:var(--ibm-cool-gray-100);margin-bottom:16px;margin-top:40px;padding-top:8px;border-top:2px solid var(--ibm-cool-gray-20);}
+  h3{font-size:1.05rem;font-weight:600;color:var(--ibm-cool-gray-90);margin:28px 0 10px;}
+  p{margin-bottom:16px;}
+  .divider{border:none;border-top:1px solid var(--border);margin:44px 0;}
+
+  .named-concept{background:#edf5ff;border-left:4px solid var(--ibm-blue);padding:18px 22px;margin:28px 0;border-radius:0 6px 6px 0;}
+  .named-concept .concept-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ibm-blue);margin-bottom:6px;}
+  .named-concept p{margin:0 0 8px;font-size:.95rem;color:var(--ibm-cool-gray-90);}
+  .named-concept p:last-child{margin:0;}
+
+  .reality-check{background:#fff8f1;border-left:4px solid var(--ibm-orange);padding:16px 22px;margin:24px 0;border-radius:0 6px 6px 0;}
+  .reality-check .rc-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ibm-orange);margin-bottom:6px;}
+  .reality-check p{margin:0 0 8px;color:var(--ibm-cool-gray-90);font-size:.95rem;}
+  .reality-check p:last-child{margin:0;}
+
+  .decision-box{background:var(--ibm-cool-gray-10);border:1px solid var(--ibm-cool-gray-20);border-left:4px solid var(--ibm-teal);padding:18px 22px;margin:24px 0;border-radius:0 6px 6px 0;}
+  .decision-box .db-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ibm-teal);margin-bottom:8px;}
+  .decision-box p{margin-bottom:8px;font-size:.95rem;}
+  .decision-box p:last-child{margin:0;}
+
+  .anti-pattern{background:#fff1f1;border-left:4px solid var(--ibm-red);padding:16px 22px;margin:24px 0;border-radius:0 6px 6px 0;}
+  .anti-pattern .ap-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ibm-red);margin-bottom:6px;}
+  .anti-pattern p{margin:0;font-size:.95rem;color:var(--ibm-cool-gray-90);}
+
+  .code-block{margin:24px 0;border-radius:6px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.12);}
+  .code-label{background:#1a1d23;color:#6b7280;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.08em;padding:8px 16px;text-transform:uppercase;display:flex;align-items:center;gap:8px;border-bottom:1px solid #2d3139;}
+  .dot{width:8px;height:8px;border-radius:50%;}
+  .dot-red{background:#ff5f57;}.dot-yellow{background:#ffbd2e;}.dot-green{background:#28c840;}
+  .code-block pre{margin:0!important;border-radius:0!important;}
+  .code-block pre code{font-family:'IBM Plex Mono',monospace!important;font-size:13.5px!important;line-height:1.65!important;padding:20px!important;}
+
+  .step-sequence{counter-reset:step;margin:20px 0;}
+  .step{display:flex;gap:16px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+  .step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .step-num{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--ibm-blue);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;margin-top:2px;}
+  .step-body h4{font-weight:600;font-size:.97rem;margin-bottom:4px;}
+  .step-body p{margin:0;font-size:.93rem;color:var(--text-secondary);}
+
+  .arrow-list{list-style:none;margin:10px 0 16px;padding:0;}
+  .arrow-list li{padding:5px 0 5px 22px;position:relative;font-size:.95rem;}
+  .arrow-list li::before{content:'→';position:absolute;left:0;color:var(--ibm-blue);font-weight:600;}
+
+  ul,ol{margin:10px 0 20px 24px;}
+  li{margin-bottom:6px;}
+
+  strong{color:var(--ibm-cool-gray-100);font-weight:600;}
+
+  .chapter-footer{margin-top:56px;padding-top:24px;border-top:1px solid var(--border);font-size:13px;color:var(--ibm-cool-gray-60);display:flex;flex-direction:column;gap:6px;}
+  .footer-author strong{font-weight:600;color:var(--ibm-cool-gray-100);}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.92rem;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{font-weight:600;background:var(--bg-subtle);font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ibm-cool-gray-90);}
+
+  code:not(pre code){background:var(--bg-subtle);padding:2px 6px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:.86em;color:var(--ibm-cool-gray-100);}
+</style>
+</head>
+<body>
+
+<div class="book-header">
+  <div class="book-title-small">IBM i Modernization Playbook</div>
+  <div>Companion Guide &nbsp;&middot;&nbsp; VS Code + GitHub</div>
+</div>
+
+<div class="chapter-header">
+  <div class="chapter-label">Companion Guide</div>
+  <div class="chapter-number">For teams replacing ACS and Aldon</div>
+  <h1>From ACS and Aldon to VS Code and GitHub</h1>
+</div>
+
+<div class="lead">
+  <p>If your organisation has just made the call to replace ACS with VS Code and Aldon with GitHub, two things are true at the same time. The decision is sound — the tooling is better in every meaningful dimension. And the transition will be harder than whoever made the decision thinks it will be. What this guide does is get you from "we have been told to use these tools" to "our team is committing code and building programs with them" in a structured way, without breaking anything along the way.</p>
+
+  <p>This is not a vendor tutorial. This is written by someone who has watched several IBM i teams walk this path, and pays close attention to the places where they got stuck. Read it start to finish the first time. After that, keep it open as a reference while you work.</p>
+</div>
+
+<div class="learn-box">
+  <h4>What you'll be able to do by the end of this guide</h4>
+  <ul>
+    <li>Install VS Code and the IBM i Development Pack with the right extensions enabled</li>
+    <li>Connect VS Code to your IBM i via SSH, including the configuration checks that people miss</li>
+    <li>Understand the two working models — source members vs local project files — and know which to start with</li>
+    <li>Set up Git on your machine, authenticate to GitHub, and clone your first repository</li>
+    <li>Follow a standard day in the workflow: pull, branch, edit, compile, commit, push, pull request</li>
+    <li>Recover from the three most common situations where Git feels like it has eaten your work</li>
+  </ul>
+</div>
+
+<h2>Why the change matters, and why people resist it</h2>
+
+<p>ACS and Aldon did their job for a long time. ACS gave you a green screen replacement that felt like a terminal. Aldon gave you a change management system that understood IBM i libraries, objects, and promotion paths. Both tools were built specifically for IBM i and fit the platform well.</p>
+
+<p>What they did not do is integrate with the rest of the world. When the organisation decided to adopt GitHub for its .NET, Java, and web teams, the IBM i team stayed on an island. When the DevOps team built CI/CD pipelines that triggered from pull requests, IBM i releases still went through Aldon's promotion screens. When a new developer joined, they had to learn a toolset that nobody else in the industry uses.</p>
+
+<p>The case for VS Code and GitHub is not that they are better editors than ACS or better change management than Aldon. The case is that they are the same tools every other developer in the organisation uses. That alignment — not any single feature — is the benefit.</p>
+
+<div class="reality-check">
+  <div class="rc-label">⚠ Reality Check</div>
+  <p>The hardest part of this transition is not technical. It is the week three frustration when a senior RPG developer who has been writing clean code in SEU for twenty-five years suddenly cannot find a source member, cannot remember the Git command, and feels slower than the junior developer who joined last year. That frustration is real and it is temporary. What helps is acknowledging it openly. What hurts is pretending it is not happening. Give the team permission to struggle for a few weeks. Do not measure productivity during the transition — measure it six weeks in.</p>
+</div>
+
+<h2>The two working models, and which one to start with</h2>
+
+<p>Before any tool is installed, the team needs to decide how it is going to work. There are two legitimate approaches, and the choice affects everything that follows.</p>
+
+<p><strong>Model 1 — Edit source members directly on the IBM i.</strong> Your RPGLE, CL, and DDS source stays in QRPGLESRC, QCLSRC, and so on, exactly where it has always been. VS Code connects to the IBM i over SSH, opens source members from member lists, and saves them back to the source physical files. Compilation happens on the IBM i the way it always has. Git, in this model, is not tightly integrated with your daily editing — it is a separate process where source members are periodically exported to a Git repository.</p>
+
+<p><strong>Model 2 — Local project files synced to the IBM i.</strong> Your source code is stored as streamfiles in a folder on your laptop. You edit locally, with all the features of VS Code and Git available inline. When you are ready to compile, VS Code deploys the files to your IFS home directory on the IBM i and runs the compile from there. The Git repository is the source of truth; the IBM i receives copies for compilation.</p>
+
+<div class="decision-box">
+  <div class="db-label">Decision Box: which model to start with</div>
+  <p><strong>Start with Model 1 (source members).</strong> It is the smaller behavioural change. The team still thinks in QRPGLESRC and member lists, just with a better editor. You can ship real work within two weeks of installing VS Code.</p>
+  <p>Model 2 is more powerful and is where you want to end up. But it requires the team to simultaneously learn a new editor, a new workflow, a new source layout, and Git. That is too many changes at once for most teams.</p>
+  <p>A reasonable plan: eight to twelve weeks in Model 1 while the team gets comfortable with VS Code and Git basics, then a planned migration of a pilot application to Model 2.</p>
+</div>
+
+<p>The rest of this guide is written assuming Model 1 as the starting point. The Model 2 workflow differences are called out where they apply.</p>
+
+<hr class="divider">
+
+<h2>Part One — Install and connect</h2>
+
+<h3>Step 1: Install VS Code</h3>
+
+<p>Go to <code>code.visualstudio.com</code> and download the installer for your operating system. Run it. On Windows, tick "Add to PATH" during installation — it is easy to miss. Launch VS Code once to confirm it opens.</p>
+
+<p>VS Code is just an editor when you install it. Its power comes from extensions. You will install four of them before you do anything else.</p>
+
+<h3>Step 2: Install the IBM i Development Pack</h3>
+
+<p>Press <code>Ctrl + Shift + X</code> (Windows) or <code>Cmd + Shift + X</code> (Mac) to open the Extensions panel. In the search box at the top, type:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>Extension search</span>
+  </div>
+  <pre><code class="language-plaintext">IBM i Development Pack</code></pre>
+</div>
+
+<p>The first result will be the pack maintained by the Code for IBM i team. Click Install. This single install gives you roughly a dozen extensions including the main "Code for IBM i" extension, RPGLE language tools, DB2 integration, debugger support, and the IBM i Project Explorer. Accept any prompts that appear.</p>
+
+<p>After installation, restart VS Code. You should now see a new icon in the left sidebar that looks like an IBM i server — it appears below the standard icons for Explorer, Search, Source Control, and Debug.</p>
+
+<div class="reality-check">
+  <div class="rc-label">⚠ Reality Check</div>
+  <p>If the IBM i icon does not appear after restart, the usual cause is that the extension pack did not fully install because VS Code is running in Restricted Mode on your workspace. Look at the bottom-left corner of VS Code. If it says "Restricted Mode", click it and choose "Trust". The extensions will then finish loading and the icon will appear.</p>
+</div>
+
+<h3>Step 3: Check SSH is running on the IBM i</h3>
+
+<p>VS Code connects to the IBM i over SSH, not over the 5250 or ODBC protocols that ACS used. Before you can connect, SSH has to be running on the IBM i. Log in with your usual 5250 session and check:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>CL — check if SSH daemon is running</span>
+  </div>
+  <pre><code class="language-bash">NETSTAT *CNN</code></pre>
+</div>
+
+<p>Look for any entry with local port 22 in the list. If you see port 22 in Listen state, SSH is running. If you do not, start it with:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>CL — start SSH daemon</span>
+  </div>
+  <pre><code class="language-bash">STRTCPSVR SERVER(*SSHD)</code></pre>
+</div>
+
+<p>To check that it will start automatically the next time the system IPLs, work with the TCP/IP server auto-start list using <code>CHGTCPSVR SVRSPCVAL(*SSHD) AUTOSTART(*YES)</code>. If SSH is completely unknown on your system, the 5733-SC1 licensed program product needs to be installed first — this is standard IBM shipping and your system administrator can confirm.</p>
+
+<div class="anti-pattern">
+  <div class="ap-label">✗ Anti-Pattern: relying on your own SSH key without knowing what happens when someone leaves</div>
+  <p>In a team setting, everyone generating their own SSH key and copying their public key to their IBM i user profile's <code>.ssh/authorized_keys</code> is a simple setup that works — until someone leaves the company and nobody knows which keys are authorised for which users. Before rolling this out to a team, decide whether keys will be managed centrally, whether you will use password authentication initially, or whether you have an identity management tool that handles SSH keys for the organisation.</p>
+</div>
+
+<h3>Step 4: Create your first connection</h3>
+
+<p>Click the IBM i icon in the left sidebar. You will see a panel titled "IBM i" on the left with a button that says "Connect to an IBM i". Click it. A form appears at the top of the VS Code window asking for:</p>
+
+<ul>
+  <li><strong>Connection Name</strong> — a label for your reference. Use something descriptive like <code>DEV-IBMi</code> or <code>PROD-IBMi</code>. This is local to your VS Code only.</li>
+  <li><strong>Host or IP Address</strong> — your IBM i's hostname or IP. The same one you use for ACS or 5250 sessions.</li>
+  <li><strong>Port</strong> — leave at 22 unless your organisation has moved SSH to a non-standard port.</li>
+  <li><strong>Username</strong> — your IBM i user profile.</li>
+  <li><strong>Authentication</strong> — choose Password for your first connection. You can switch to SSH key later.</li>
+</ul>
+
+<p>Click Connect. Within a few seconds you should see the IBM i panel populate with sections for Objects, Libraries, IFS, and Database. If connection fails, the most common causes in order of likelihood are: SSH not running on the IBM i, a firewall blocking port 22, wrong password, and a user profile that is disabled or has password expired.</p>
+
+<div class="decision-box">
+  <div class="db-label">Decision Box: password vs SSH key authentication</div>
+  <p>For the first month, password authentication is fine and simpler to reason about. Everyone on the team already has an IBM i user profile with a password. Get the team connecting and working first.</p>
+  <p>After the first month, switch the team to SSH key authentication. It is more secure, it means passwords do not get cached in connection dialogs, and it removes the small daily friction of re-entering a password. The Code for IBM i extension has built-in support for generating and deploying an SSH key — right-click on your connection and choose "Send SSH Key to Server".</p>
+</div>
+
+<hr class="divider">
+
+<h2>Part Two — Working with source members in VS Code</h2>
+
+<p>With the connection live, you can now browse source physical files and edit members the same way you did in SEU or RDi — just in a better editor.</p>
+
+<h3>Setting your library list</h3>
+
+<p>In the IBM i panel on the left, find the section labelled "User Library List". If it does not show the libraries you usually work with, right-click the section header and choose "Add Library to List". Add each library you need. This library list is connection-specific and persists between sessions.</p>
+
+<p>The library list in VS Code works exactly like the library list in your 5250 session. It determines which library gets searched when you compile, which library unqualified object references resolve to, and the order of lookup.</p>
+
+<h3>Opening a source member</h3>
+
+<p>In the IBM i panel, expand "Objects" and then expand a library, then a source physical file like <code>QRPGLESRC</code>. You will see the members inside. Click any member to open it in the editor.</p>
+
+<p>The file opens with syntax highlighting, a minimap on the right, and all the standard VS Code editor features. Type your changes. Press <code>Ctrl + S</code> to save. The member is saved back to the IBM i immediately.</p>
+
+<div class="reality-check">
+  <div class="rc-label">⚠ Reality Check</div>
+  <p>Source dates. If your shop uses source dates in column 1-6 of source members for change tracking, Code for IBM i handles this automatically but you need to enable it. Open the Code for IBM i settings (gear icon next to the connection) and ensure "Source Dates" is enabled. Without this setting, every line will appear as modified whenever you save, which is harmless but visually noisy and breaks change tracking for anyone still using tools that read source dates.</p>
+</div>
+
+<h3>Compiling a member</h3>
+
+<p>With a source member open, right-click anywhere in the editor and choose "Run Action on &lt;member name&gt;". A dropdown appears listing the available compile actions for this member type. For an RPGLE member, you will see options like <code>CRTBNDRPG</code>, <code>CRTRPGMOD</code>, or custom actions your team has defined.</p>
+
+<p>Choose the appropriate action. The command runs on the IBM i and the output appears in a panel at the bottom of VS Code. If the compile fails, errors are shown inline in the editor — the line with the error gets a red squiggle, and hovering over it shows the error message. No more reading through spooled files.</p>
+
+<h3>Working with IFS files</h3>
+
+<p>The IFS section of the IBM i panel behaves like a file browser. You can navigate your home directory, create folders, edit streamfiles, and upload or download files by drag and drop. For IFS-based development (stored procedures in SQL files, Node.js code, shell scripts), this is where your work happens.</p>
+
+<hr class="divider">
+
+<h2>Part Three — Understanding Git</h2>
+
+<p>Before we connect GitHub to the workflow, there needs to be a shared understanding of what Git actually is. This is the single most important section of the guide. Teams that fail at Git fail because they never built the mental model — they kept running commands without understanding what those commands were doing.</p>
+
+<h3>Git is not a backup system. It is not Dropbox.</h3>
+
+<p>When Aldon saw a change you made to a source member, it stored that change in its tracking system and promoted it when you asked it to. The mental model was: I edit the member, I check it in, it is saved somewhere else now.</p>
+
+<p>Git does not work that way. With Git there are three separate places your code can be, and understanding these three places is the whole game:</p>
+
+<div class="named-concept">
+  <div class="concept-label">The Three Places</div>
+  <p><strong>1. Your working directory.</strong> The actual files on your laptop that you are editing right now. Changes here are invisible to Git until you tell Git about them.</p>
+  <p><strong>2. The staging area (the "index").</strong> A list of changes you have selected and are preparing to commit. You tell Git "these specific changes are the ones I want to save" before you actually save them.</p>
+  <p><strong>3. The local repository.</strong> A database of permanent snapshots ("commits") on your laptop. Every commit is a point in time you can return to.</p>
+</div>
+
+<p>There is a fourth place — the remote repository (GitHub). But the first three exist entirely on your laptop. You can do useful work with Git without ever connecting to GitHub.</p>
+
+<p>The basic cycle is: you edit files in the working directory, you stage the changes you want, you commit them to the local repository, and periodically you push commits from the local repository to the remote repository on GitHub so the rest of the team can see them.</p>
+
+<div class="named-concept">
+  <div class="concept-label">The Basic Cycle</div>
+  <p>Edit files → Stage changes (<code>git add</code>) → Commit to local repo (<code>git commit</code>) → Push to GitHub (<code>git push</code>)</p>
+  <p>And the reverse flow when picking up someone else's work: Pull from GitHub (<code>git pull</code>) → Files update in your working directory</p>
+</div>
+
+<h3>Branches are cheap. Use them.</h3>
+
+<p>A branch in Git is a lightweight pointer to a specific commit. Creating a branch takes milliseconds and uses almost no disk space. This is a fundamentally different model from what Aldon or Turnover gave you. In those systems, a branch was a heavy structural thing. In Git, a branch is nothing.</p>
+
+<p>The standard workflow is: every piece of work happens on its own branch. When you start a new feature, bug fix, or change, you create a branch. You commit your work to that branch. When it is ready, you open a pull request, the team reviews it, and it gets merged into the main branch. Then the branch is deleted.</p>
+
+<p>Working directly on the main branch — the equivalent of checking out from Aldon's production library and saving straight back to it — is possible in Git but it is the thing teams should make a rule against. Branches exist so that half-finished work can be saved, backed up to GitHub, and shared without it being taken as "this is ready".</p>
+
+<h3>Pull requests are where review happens</h3>
+
+<p>A pull request is a GitHub feature, not a Git feature. It is a web page that shows the differences between your branch and the main branch, lets reviewers comment on specific lines, and provides the button that merges the change in when everyone approves.</p>
+
+<p>Pull requests replace the Aldon approval workflow. Where you used to have a screen that listed pending promotions that needed approval, you now have a GitHub web page that shows the same thing — except it includes the actual code diff, line-by-line comments, automated checks, and a full audit trail of who said what and when.</p>
+
+<hr class="divider">
+
+<h2>Part Four — Install Git and connect to GitHub</h2>
+
+<h3>Step 1: Install Git on your machine</h3>
+
+<p>Git is a separate tool from GitHub. Git is the version control system that runs locally on your machine. GitHub is a website that hosts Git repositories. You need Git installed on your laptop regardless of whether you use GitHub, GitLab, or anything else.</p>
+
+<p>Download the Git installer from <code>git-scm.com</code>. On Windows, use the defaults for most options. One choice to pay attention to: when asked about line endings, choose "Checkout as-is, commit Unix-style line endings" — this prevents mixed line endings in code that will be deployed to the IBM i, where PASE is Unix-style.</p>
+
+<p>Open a new command prompt (or terminal on Mac/Linux) and verify:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>Terminal — verify Git installed</span>
+  </div>
+  <pre><code class="language-bash">git --version</code></pre>
+</div>
+
+<p>You should see something like <code>git version 2.44.0</code>. If instead you see "command not found", close and reopen your terminal — Git added itself to the PATH and your existing terminal session does not know that yet.</p>
+
+<h3>Step 2: Configure Git with your identity</h3>
+
+<p>Every commit you ever make in Git will have your name and email attached to it forever. This cannot be easily changed later. Set it correctly the first time:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>Terminal — set your Git identity</span>
+  </div>
+  <pre><code class="language-bash">git config --global user.name "Your Full Name"
+git config --global user.email "your.work.email@company.com"</code></pre>
+</div>
+
+<p>Use your work email, not a personal one. Organisations that use GitHub Enterprise will require that the email on the commit match the email on your GitHub account — and that is validated on every push.</p>
+
+<h3>Step 3: Create your GitHub account (if you do not have one)</h3>
+
+<p>If your organisation uses GitHub Enterprise, your account will be provisioned by IT. Follow whatever onboarding process they have. If you are using GitHub.com, go to <code>github.com</code> and sign up. Use your work email.</p>
+
+<h3>Step 4: Authenticate VS Code to GitHub</h3>
+
+<p>In VS Code, press <code>Ctrl + Shift + P</code> to open the Command Palette and type:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>VS Code Command Palette</span>
+  </div>
+  <pre><code class="language-plaintext">GitHub: Sign In</code></pre>
+</div>
+
+<p>VS Code opens your browser, GitHub asks you to authorise the VS Code application, you click Authorise, and the browser redirects back to VS Code. You are now signed in. VS Code can now create repositories, clone existing ones, and push commits without being asked for credentials each time.</p>
+
+<div class="reality-check">
+  <div class="rc-label">⚠ Reality Check</div>
+  <p>Many teams skip the VS Code GitHub sign-in and authenticate with a personal access token instead, usually because the organisation's SSO setup makes the browser flow unreliable. If that is your situation, generate a Personal Access Token on GitHub with <code>repo</code> scope, and VS Code will prompt you to paste it the first time you try to push. Store it somewhere safe because it will not be shown again.</p>
+</div>
+
+<hr class="divider">
+
+<h2>Part Five — Your first repository</h2>
+
+<p>For a team-level rollout, your senior developer or team lead will create the repository once, establish the folder structure, and everyone else will clone it. This section walks through both sides — the creator's first-time setup, and the subsequent clone that every team member will do.</p>
+
+<h3>The creator's workflow — one person, once per project</h3>
+
+<div class="step-sequence">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Create the repository on GitHub</h4>
+      <p>Go to github.com (or your GitHub Enterprise URL), click the + in the top right, choose "New repository". Give it a descriptive name like <code>order-management-ibmi</code>. Set it to Private (almost always the right choice for business code). Check "Add a README file" so the repository is initialised with one commit.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Clone it to your laptop</h4>
+      <p>Copy the repository URL (click the green "Code" button, copy the HTTPS URL). Open VS Code, press <code>Ctrl + Shift + P</code>, type "Git: Clone", paste the URL, and choose a folder to clone into. VS Code downloads the repository and asks if you want to open it. Say yes.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Populate with initial source</h4>
+      <p>If you are in Model 1 (source members on the IBM i), you do not put source members in the Git repository directly. Instead you populate it with project metadata — the README, an actions.json file for Code for IBM i, and any documentation. The source members continue to live on the IBM i and will be exported to Git periodically (more on this below).</p>
+      <p>If you are in Model 2 (local project files), copy your source into the repository folder now. Organise it into subfolders: <code>src/</code> for main programs, <code>includes/</code> for copybooks, <code>database/</code> for DDS or SQL definitions.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Commit and push the initial setup</h4>
+      <p>In VS Code, open the Source Control panel (the third icon in the left sidebar, or <code>Ctrl + Shift + G</code>). You will see your new files listed under "Changes". Click the + next to each to stage them (or the + next to "Changes" to stage everything). Type a commit message in the text box — "Initial project setup" is fine. Click the checkmark. Then click the three dots menu and choose Push.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h4>Set up branch protection</h4>
+      <p>Back on GitHub, go to the repository's Settings → Branches → Add rule. Require pull request reviews before merging to <code>main</code>. Require at least one approving review. This prevents anyone from pushing directly to main and enforces the review workflow from day one. Without this rule, the discipline breaks down within a month.</p>
+    </div>
+  </div>
+</div>
+
+<h3>Every team member's workflow — once per project</h3>
+
+<p>Once the repository exists on GitHub, every other team member needs to clone it to their own laptop. This is a one-time step per project:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>VS Code Command Palette</span>
+  </div>
+  <pre><code class="language-plaintext">Git: Clone</code></pre>
+</div>
+
+<p>Paste the repository URL (get it from the repo's main page), choose a folder location on your laptop, and VS Code clones it. This is your local copy of the repository. You now have everything — the full history, every branch, every file — on your machine.</p>
+
+<hr class="divider">
+
+<h2>Part Six — A day in the life</h2>
+
+<p>This is the daily workflow. Read it, then come back to it every morning for the first two weeks until it is reflexive.</p>
+
+<h3>Morning: pull latest changes from the team</h3>
+
+<p>Open VS Code with your project. Before doing anything else, open the Source Control panel and click the three dots menu → Pull. This downloads any changes your teammates have pushed to GitHub since you last worked. If there are changes, you will see them flow into your files. If there are conflicts with changes you had in progress, VS Code will flag them — but if you followed the workflow yesterday and left in a clean state, this will just pull cleanly.</p>
+
+<h3>Create a branch for today's work</h3>
+
+<p>Any work you do today goes on a branch, not on main. Look at the bottom-left of the VS Code window. You will see something like "main" — that is the current branch. Click it. A menu appears at the top. Choose "Create new branch". Name it something meaningful, like <code>fix/customer-inquiry-missing-trim</code> or <code>feature/new-pricing-api</code>. Use hyphens, not spaces. Prefix with the type of change (fix, feature, chore).</p>
+
+<p>The branch name is now shown at the bottom-left. You are working on it.</p>
+
+<h3>Edit your code</h3>
+
+<p>If you are in Model 1, open source members from the IBM i panel and edit them the usual way. If you are in Model 2, open files from the local folder.</p>
+
+<h3>Compile and test</h3>
+
+<p>Right-click the member and "Run Action" to compile. Fix any errors. Test in your test library.</p>
+
+<h3>Commit often</h3>
+
+<p>When you have a small logical unit of change that works — even if the whole feature is not done — commit it. A good commit is one that, if you had to roll it back, you would roll back a coherent set of changes together. Do not wait until the end of the day to commit once with a huge batch of unrelated changes.</p>
+
+<p>In the Source Control panel, stage your changes (+ icon), write a commit message, and click the checkmark. The commit is saved to your local repository. It has not been sent to GitHub yet.</p>
+
+<div class="named-concept">
+  <div class="concept-label">Writing a good commit message</div>
+  <p>A commit message is a note to your future self and your teammates. Good: <code>Fix null pointer in customer inquiry when address line 2 is blank</code>. Bad: <code>fix bug</code>. Good: <code>Add audit trail to order update endpoint</code>. Bad: <code>updates</code>.</p>
+  <p>Use the imperative mood — "Fix X", "Add Y", "Remove Z". It reads correctly when you review commit history later and think of each commit as an action that changed the state of the codebase.</p>
+</div>
+
+<h3>Push to GitHub</h3>
+
+<p>After a few commits — or at the end of the day, whichever comes first — push your branch to GitHub. In Source Control, three dots menu → Push. Your commits are now visible on GitHub. If your laptop dies overnight, your work is safe.</p>
+
+<h3>When the work is ready, open a pull request</h3>
+
+<p>Go to the repository on GitHub. You will see a yellow banner at the top saying "Your branch was recently pushed" with a button "Compare &amp; pull request". Click it.</p>
+
+<p>Fill in:</p>
+<ul>
+  <li>A clear title describing what the change does</li>
+  <li>A description with the reason for the change, what was tested, and anything the reviewer should pay special attention to</li>
+  <li>Reviewers — usually your team lead or a peer</li>
+</ul>
+
+<p>Click Create Pull Request. The reviewer gets notified. They will comment on specific lines, request changes, or approve. When approved, the pull request is merged into main. Your branch gets deleted. The cycle ends.</p>
+
+<hr class="divider">
+
+<h2>Part Seven — How to handle IBM i source members in Git</h2>
+
+<p>This is the specific question where most IBM i teams get stuck. You have RPGLE members in QRPGLESRC on the IBM i. You have a Git repository on your laptop. How do the two connect?</p>
+
+<p>There are three legitimate approaches, and your team lead needs to pick one and stick with it.</p>
+
+<h3>Approach A — Manual export, periodic commits</h3>
+
+<p>The simplest approach and a reasonable way to start. Source members stay on the IBM i. Periodically — daily, weekly, or when a change is ready for review — a member is exported to the Git repository as a text file, committed, and pushed.</p>
+
+<p>The export can be manual (use the Code for IBM i extension to download a member, save it as a file in the repo) or scripted (a CL program that iterates through a source file and writes members out to the IFS, followed by a Git commit from the IFS).</p>
+
+<p>This approach preserves the SEU/PDM mental model. It works fine for smaller teams and smaller codebases. Its main weakness is that Git is not the source of truth — the IBM i is — so the Git history can drift from actual IBM i state if exports are not disciplined.</p>
+
+<h3>Approach B — Convert to streamfiles in the IFS, Git on the IFS</h3>
+
+<p>Source members are converted to streamfiles in the IFS (one file per member, with a sensible extension like <code>.rpgle</code> or <code>.clle</code>). A Git repository is created in the IFS folder containing those files. The IBM i's own installed Git (PASE) runs commits from the IFS. Compilation reads from the IFS streamfile, not from QRPGLESRC.</p>
+
+<p>This is how many modernised IBM i shops end up. It works well but it is a significant change — compilation commands, build scripts, and developer habits all shift.</p>
+
+<h3>Approach C — Model 2 with local development and deploy-to-IFS</h3>
+
+<p>Source files live on the developer's laptop in a Git repository. Code for IBM i's "Deploy" feature copies them to the IFS on the IBM i when you are ready to compile. Compilation reads from the IFS location. The laptop's Git repo is the source of truth; the IBM i only sees the current state of files for compilation.</p>
+
+<p>This is the most modern approach and the one with the best Git experience. It is also the biggest behavioural change. Save this for Model 2 adoption.</p>
+
+<div class="decision-box">
+  <div class="db-label">Decision Box: which approach to start with</div>
+  <p>Pick <strong>Approach A</strong> as the team's first Git workflow. It is the most conservative change — nothing about compilation, source member layout, or the IBM i side moves. Get the team comfortable with Git the tool. After six to eight weeks, evaluate whether to progress to B or C.</p>
+</div>
+
+<hr class="divider">
+
+<h2>Part Eight — Three situations where Git feels like it has eaten your work</h2>
+
+<p>Almost every team member will hit these in their first month. Each has a calm, clean recovery. Print this section and pin it.</p>
+
+<h3>Situation 1: "I made changes and now I cannot find them"</h3>
+
+<p>Usually caused by: you switched branches and your editor is now showing the other branch's version of the files.</p>
+
+<p>Check the bottom-left of VS Code. What branch does it say? Is it the branch you were working on? If not, switch back to your branch (click the branch name, pick the right one). Your changes are still there on the branch where you made them.</p>
+
+<p>If that does not resolve it: open the Source Control panel. If you see changes there, your work is safe — you just need to stage and commit them. If the panel is empty, run <code>git stash list</code> in the terminal — you may have stashed them by accident.</p>
+
+<h3>Situation 2: "I pulled and now my file has these weird &lt;&lt;&lt;&lt;&lt;&lt;&lt; markers"</h3>
+
+<p>That is a merge conflict. It means the same lines were changed both in your local copy and in the version on GitHub. Git does not know which to keep, so it is asking you to decide.</p>
+
+<p>Open the conflicted file. You will see blocks like this:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>Merge conflict markers</span>
+  </div>
+  <pre><code class="language-plaintext">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+your version of the lines
+=======
+the version from GitHub
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</code></pre>
+</div>
+
+<p>VS Code shows buttons above each conflict block: "Accept Current Change", "Accept Incoming Change", "Accept Both". Read both versions carefully, pick the right resolution, and the markers are removed. Save the file. Stage it. Commit. The merge completes.</p>
+
+<p>If you are not sure what to do and you are panicking, run <code>git merge --abort</code> in the terminal. This undoes the pull entirely and puts you back where you were before. You can try again or ask a teammate for help.</p>
+
+<h3>Situation 3: "I committed to the wrong branch"</h3>
+
+<p>You were on main, not on a feature branch, and you committed a bunch of changes. Now you want them on a feature branch and main to be clean.</p>
+
+<p>In the terminal, from the folder of your project:</p>
+
+<div class="code-block">
+  <div class="code-label">
+    <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+    <span>Terminal — move last commit to a new branch</span>
+  </div>
+  <pre><code class="language-bash">git branch feature/my-work
+git reset --hard HEAD~1
+git checkout feature/my-work</code></pre>
+</div>
+
+<p>Line 1 creates a new branch pointing at your current commit. Line 2 rewinds main by one commit (the commit is not lost — it is still on the branch you just created). Line 3 switches you to the new branch. You are now in the right place.</p>
+
+<p>If there are more than one commit to move, change <code>HEAD~1</code> to <code>HEAD~2</code>, <code>HEAD~3</code>, etc. — the number of commits to rewind.</p>
+
+<div class="reality-check">
+  <div class="rc-label">⚠ Reality Check</div>
+  <p>Never run <code>git reset --hard</code> if you have commits that are only on your local machine and not pushed anywhere. The reset will delete them permanently. The safe rule: if you are not sure, do not run any command with <code>--hard</code> or <code>--force</code> in it. Ask someone first. These are the two flags that cause 90% of "Git ate my work" situations.</p>
+</div>
+
+<hr class="divider">
+
+<h2>Part Nine — Recommended first-month learning path</h2>
+
+<p>This is what I would have any IBM i developer do in their first month of VS Code and Git, in order.</p>
+
+<div class="step-sequence">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Week 1 — VS Code fluency only, no Git</h4>
+      <p>Install VS Code, install the IBM i Development Pack, connect to the IBM i, and work entirely in source members. Do not touch Git this week. The goal is to become comfortable enough with the editor that switching from SEU does not slow you down. Focus on learning keyboard shortcuts — <code>Ctrl+P</code> to open a file by name, <code>Ctrl+Shift+F</code> for project-wide search, <code>F12</code> to go to definition.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Week 2 — Read-only Git</h4>
+      <p>Clone your team's main Git repository. Browse it. Read the code. Look at the history. Open a few pull requests on GitHub (even merged ones from months ago) and read the conversations. Do not push anything yet. The goal is to build the mental model of what a repository looks like without the pressure of making changes to it.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Week 3 — First commit and pull request</h4>
+      <p>Pick a tiny, low-risk change — a typo in a comment, a small refactor, a README update. Create a branch. Make the change. Commit. Push. Open a pull request. Get it reviewed and merged. Do this two or three times with similarly small changes. The goal is to exercise the whole workflow with something that cannot break anything, so that when you do it for real work you are not also learning the tooling.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Week 4 — Real work on a branch</h4>
+      <p>Pick up an actual bug or small feature. Use the full workflow — branch, edit, compile, commit, pull request, review, merge. Do it without looking at this guide if you can.</p>
+    </div>
+  </div>
+</div>
+
+<p>After four weeks, every team member should be able to do the daily workflow without thinking about it. Expertise will keep developing for another six months, but the basics will be reflexive.</p>
+
+<hr class="divider">
+
+<h2>A note on what comes next</h2>
+
+<p>Once the team is comfortable with the tools, the conversations that become possible are big ones. Automated testing. Continuous integration. Deployment pipelines that promote changes from test to production without manual steps. Code reviews that are actually thorough because the diff view makes it easy. New developer onboarding that takes days instead of months because everything is in Git and documented in the same place as the code.</p>
+
+<p>None of this is free and none of it is automatic. But it all becomes reachable once the team is past the initial learning curve — which is the curve this guide is designed to shorten.</p>
+
+<p>Good luck.</p>
+
+<div class="chapter-footer">
+  <div class="footer-author"><strong>Y B Audi</strong> &nbsp;&middot;&nbsp; IBM i Enterprise Architect</div>
+  <div class="footer-meta">Companion Guide to the IBM i Modernization Playbook &nbsp;&middot;&nbsp; VS Code + GitHub Transition</div>
+</div>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>
